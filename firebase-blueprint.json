@@ -1,0 +1,79 @@
+{
+  "entities": {
+    "WatchlistItem": {
+      "title": "WatchlistItem",
+      "description": "A stock that the user is actively monitoring in their watchlist",
+      "type": "object",
+      "properties": {
+        "symbol": { "type": "string", "maxLength": 10 },
+        "addedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["symbol", "addedAt"]
+    },
+    "StockAlert": {
+      "title": "StockAlert",
+      "description": "An active alert set by the user for a specific stock price target, trendline break, or volume change",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "symbol": { "type": "string", "maxLength": 10 },
+        "type": { "type": "string", "enum": ["price_above", "price_below", "volume_spike", "trendline_break"] },
+        "targetValue": { "type": "number" },
+        "active": { "type": "boolean" },
+        "triggered": { "type": "boolean" },
+        "message": { "type": "string", "maxLength": 256 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "symbol", "type", "targetValue", "active", "triggered", "createdAt"]
+    },
+    "StockBag": {
+      "title": "StockBag",
+      "description": "A purchase portfolio position or bag item representing real capital allocation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "symbol": { "type": "string", "maxLength": 10 },
+        "name": { "type": "string", "maxLength": 128 },
+        "type": { "type": "string", "enum": ["day_trade", "long_term"] },
+        "shares": { "type": "number" },
+        "averageEntry": { "type": "number" },
+        "purchaseDate": { "type": "string", "maxLength": 10 }
+      },
+      "required": ["id", "symbol", "name", "type", "shares", "averageEntry", "purchaseDate"]
+    },
+    "TradeLog": {
+      "title": "TradeLog",
+      "description": "A chronological trading log transaction",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "symbol": { "type": "string", "maxLength": 10 },
+        "type": { "type": "string", "enum": ["day_trade", "long_term"] },
+        "action": { "type": "string", "enum": ["BUY", "SELL"] },
+        "shares": { "type": "number" },
+        "price": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "notes": { "type": "string", "maxLength": 512 }
+      },
+      "required": ["id", "symbol", "type", "action", "shares", "price", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/watchlist/{symbol}": {
+      "schema": "WatchlistItem",
+      "description": "User's personalized watchlist of monitored stocks"
+    },
+    "/users/{userId}/alerts/{alertId}": {
+      "schema": "StockAlert",
+      "description": "Active in-app notification alerts for price targets or volume events"
+    },
+    "/users/{userId}/bags/{bagId}": {
+      "schema": "StockBag",
+      "description": "Durable portfolio allocations (bags) synced to the cloud"
+    },
+    "/users/{userId}/logs/{logId}": {
+      "schema": "TradeLog",
+      "description": "Chronological history of purchase and sale transactions for portfolio tracking"
+    }
+  }
+}

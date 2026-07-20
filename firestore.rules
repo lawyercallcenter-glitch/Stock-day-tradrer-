@@ -1,0 +1,102 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Safety Net default-deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Entity-specific validations
+
+    function isValidWatchlistItem(data) {
+      return data.keys().hasAll(['symbol', 'addedAt'])
+        && data.keys().size() == 2
+        && data.symbol is string
+        && data.symbol.size() <= 10
+        && data.addedAt is string;
+    }
+
+    function isValidStockAlert(data) {
+      return data.keys().hasAll(['id', 'symbol', 'type', 'targetValue', 'active', 'triggered', 'createdAt'])
+        && data.keys().size() == 7
+        && data.id is string
+        && data.id.size() <= 128
+        && data.symbol is string
+        && data.symbol.size() <= 10
+        && data.type in ['price_above', 'price_below', 'volume_spike', 'trendline_break']
+        && data.targetValue is number
+        && data.active is bool
+        && data.triggered is bool
+        && data.createdAt is string;
+    }
+
+    function isValidStockBag(data) {
+      return data.keys().hasAll(['id', 'symbol', 'name', 'type', 'shares', 'averageEntry', 'purchaseDate'])
+        && data.keys().size() == 7
+        && data.id is string
+        && data.id.size() <= 128
+        && data.symbol is string
+        && data.symbol.size() <= 10
+        && data.name is string
+        && data.name.size() <= 128
+        && data.type in ['day_trade', 'long_term']
+        && data.shares is number
+        && data.averageEntry is number
+        && data.purchaseDate is string
+        && data.purchaseDate.size() <= 10;
+    }
+
+    function isValidTradeLog(data) {
+      return data.keys().hasAll(['id', 'symbol', 'type', 'action', 'shares', 'price', 'timestamp'])
+        && (data.keys().size() == 7 || (data.keys().size() == 8 && data.keys().hasAll(['notes'])))
+        && data.id is string
+        && data.id.size() <= 128
+        && data.symbol is string
+        && data.symbol.size() <= 10
+        && data.type in ['day_trade', 'long_term']
+        && data.action in ['BUY', 'SELL']
+        && data.shares is number
+        && data.price is number
+        && data.timestamp is string
+        && (!data.keys().hasAll(['notes']) || (data.notes is string && data.notes.size() <= 512));
+    }
+
+    // Rules for watchlist
+    match /users/{userId}/watchlist/{symbol} {
+      allow read, write: if isOwner(userId) && isValidId(symbol);
+      allow create, update: if isValidWatchlistItem(request.resource.data);
+    }
+
+    // Rules for alerts
+    match /users/{userId}/alerts/{alertId} {
+      allow read, write: if isOwner(userId) && isValidId(alertId);
+      allow create, update: if isValidStockAlert(request.resource.data);
+    }
+
+    // Rules for bags
+    match /users/{userId}/bags/{bagId} {
+      allow read, write: if isOwner(userId) && isValidId(bagId);
+      allow create, update: if isValidStockBag(request.resource.data);
+    }
+
+    // Rules for logs
+    match /users/{userId}/logs/{logId} {
+      allow read, write: if isOwner(userId) && isValidId(logId);
+      allow create, update: if isValidTradeLog(request.resource.data);
+    }
+  }
+}

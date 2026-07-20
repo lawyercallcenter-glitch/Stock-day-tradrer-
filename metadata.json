@@ -1,0 +1,11 @@
+{
+  "name": "Remix: Stock Day Trader and Portfolio Analyzer",
+  "description": "An AI-powered dashboard that analyzes day trading volatility versus long-term investing, provides real-time Gemini web-grounded stock suggestions, and tracks actual portfolios with historical data metrics.",
+  "requestFramePermissions": [
+    "microphone",
+    "screen-wake-lock"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
