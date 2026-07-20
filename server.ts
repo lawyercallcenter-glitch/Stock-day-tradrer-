@@ -1162,6 +1162,46 @@ What ticker symbol or trading setup should we prepare a tactical risk plan for n
     }
   });
 
+  // Endpoint: SEO AI Optimization Engine
+  app.post("/api/gemini/generate-seo", async (req, res) => {
+    const { topic } = req.body;
+    try {
+      const ai = getGeminiClient();
+      const prompt = `Analyze this topic for SEO optimization in the financial/trading niche: "${topic}"
+      
+      Provide a highly optimized Title, Meta Description, and 5-10 high-conviction Keywords.
+      Return a strictly formatted JSON response:
+      {
+        "title": "Optimized Page Title",
+        "description": "Compelling meta description under 160 chars.",
+        "keywords": ["keyword1", "keyword2", ...]
+      }`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            required: ["title", "description", "keywords"],
+            properties: {
+              title: { type: Type.STRING },
+              description: { type: Type.STRING },
+              keywords: { type: Type.ARRAY, items: { type: Type.STRING } }
+            }
+          }
+        }
+      });
+
+      const parsedData = robustParseJSON(response.text || "{}");
+      res.json(parsedData);
+    } catch (err) {
+      console.error("SEO AI error:", err);
+      res.status(500).json({ error: "Failed to generate SEO optimization." });
+    }
+  });
+
   server.listen(PORT, "0.0.0.0", () => {
     console.log(`Express server running on http://0.0.0.0:${PORT}`);
   });

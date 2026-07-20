@@ -16,7 +16,12 @@ import PricingPage from "./components/PricingPage";
 import MarketingConsole from "./components/MarketingConsole";
 import WorkspaceHub from "./components/WorkspaceHub";
 import MarketSentimentGauge from "./components/MarketSentimentGauge";
-import { LineChart, Briefcase, Activity, Sparkles, TrendingUp, Compass, Cpu, Bell, Star, Shield, LogIn, LogOut, Check, X, FileSearch, ExternalLink, HelpCircle, Zap, CreditCard, Megaphone, GraduationCap, BookOpen } from "lucide-react";
+import GoogleMeetIntegration from "./components/GoogleMeetIntegration";
+import ContactsIntegration from "./components/ContactsIntegration";
+import GoogleChatIntegration from "./components/GoogleChatIntegration";
+import MarketingHub from "./components/MarketingHub";
+import EducationCenter from "./components/EducationCenter";
+import { LineChart, Briefcase, Activity, Sparkles, TrendingUp, Compass, Cpu, Bell, Star, Shield, LogIn, LogOut, Check, X, FileSearch, ExternalLink, HelpCircle, Zap, CreditCard, Megaphone, GraduationCap, BookOpen, Video, Users, Share2, MessageSquare } from "lucide-react";
 import { initAuth, googleSignIn, googleSignOut, db, handleFirestoreError, OperationType } from "./lib/firebase";
 import { collection, doc, setDoc, deleteDoc, getDocs } from "firebase/firestore";
 import { loadGooglePickerScript, showGooglePicker, fetchContacts } from "./lib/workspace";
@@ -77,7 +82,7 @@ export default function App() {
   const [loadingData, setLoadingData] = useState(false);
   const [chartViewMode, setChartViewMode] = useState<"day_trade" | "long_term">("day_trade");
   const [theme, setTheme] = useState<"midnight" | "daylight">("midnight");
-  const [selectedTab, setSelectedTab] = useState<"visualizer" | "bags" | "ai_console" | "gemini_chat" | "recommendations" | "pricing" | "marketing" | "progress" | "workspace" | "google_meet" | "contacts" | "journal" | "portfolios" | "watchlists">("visualizer");
+  const [selectedTab, setSelectedTab] = useState<"visualizer" | "bags" | "ai_console" | "gemini_chat" | "recommendations" | "pricing" | "marketing" | "progress" | "workspace" | "google_meet" | "contacts" | "google_chat" | "journal" | "portfolios" | "watchlists" | "education">("visualizer");
   const [pendingTickerSelection, setPendingTickerSelection] = useState<string | null>(null);
   const [tradeModalTicker, setTradeModalTicker] = useState<string | null>(null);
 
@@ -682,19 +687,31 @@ export default function App() {
                 onClick={() => setSelectedTab("google_meet")}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "google_meet" ? "bg-neutral-850 text-emerald-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
               >
-                <Zap size={13} /> Google Meet
+                <Video size={13} /> Meet
               </button>
               <button
                 onClick={() => setSelectedTab("contacts")}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "contacts" ? "bg-neutral-850 text-emerald-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
               >
-                <Zap size={13} /> Contacts
+                <Users size={13} /> Contacts
               </button>
               <button
-                onClick={() => setSelectedTab("journal")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "journal" ? "bg-neutral-850 text-emerald-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
+                onClick={() => setSelectedTab("google_chat")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "google_chat" ? "bg-neutral-850 text-indigo-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
               >
-                <BookOpen size={13} /> Journal
+                <MessageSquare size={13} /> Chat
+              </button>
+              <button
+                onClick={() => setSelectedTab("marketing")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "marketing" ? "bg-neutral-850 text-indigo-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
+              >
+                <Share2 size={13} /> Ad Center
+              </button>
+              <button
+                onClick={() => setSelectedTab("education")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "education" ? "bg-neutral-850 text-rose-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
+              >
+                <GraduationCap size={13} /> Academy
               </button>
               <button
                 onClick={() => setSelectedTab("pricing")}
@@ -1125,36 +1142,32 @@ export default function App() {
           )}
 
           {selectedTab === "google_meet" && (
-            <div className="animate-fadeIn p-6 bg-neutral-900 rounded-2xl border border-neutral-800">
-              <h2 className="text-xl font-bold mb-4">Google Meet</h2>
-              <p>Google Meet integration coming soon.</p>
-            </div>
-          )}
-
-          {selectedTab === "journal" && (
-            <div className="max-w-md mx-auto animate-fadeIn">
-              <TradeJournalForm user={user} initialTicker={activeTicker} initialPrice={presets.find(p => p.symbol === activeTicker)?.price} />
+            <div className="animate-fadeIn">
+              <GoogleMeetIntegration accessToken={accessToken} />
             </div>
           )}
 
           {selectedTab === "contacts" && (
-            <div className="animate-fadeIn p-6 bg-neutral-900 rounded-2xl border border-neutral-800">
-              <h2 className="text-xl font-bold mb-4">Contacts</h2>
-              {contacts.length === 0 ? (
-                <p>No contacts found.</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {contacts.map((c: any) => (
-                    <div key={c.resourceName} className="bg-neutral-950 p-4 rounded-xl border border-neutral-800 flex items-center gap-4">
-                      {c.photos?.[0] && <img src={c.photos[0].url} className="w-12 h-12 rounded-full" />}
-                      <div>
-                        <p className="font-bold">{c.names?.[0]?.displayName}</p>
-                        <p className="text-xs text-neutral-500">{c.emailAddresses?.[0]?.value}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <div className="animate-fadeIn">
+              <ContactsIntegration accessToken={accessToken} />
+            </div>
+          )}
+
+          {selectedTab === "google_chat" && (
+            <div className="animate-fadeIn">
+              <GoogleChatIntegration accessToken={accessToken} />
+            </div>
+          )}
+
+          {selectedTab === "marketing" && (
+            <div className="animate-fadeIn">
+              <MarketingHub />
+            </div>
+          )}
+
+          {selectedTab === "education" && (
+            <div className="animate-fadeIn">
+              <EducationCenter />
             </div>
           )}
 

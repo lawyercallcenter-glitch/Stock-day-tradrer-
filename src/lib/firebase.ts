@@ -35,6 +35,9 @@ provider.addScope("https://www.googleapis.com/auth/forms.responses.readonly");
 provider.addScope("https://www.googleapis.com/auth/meetings.space.created");
 provider.addScope("https://www.googleapis.com/auth/meetings.space.readonly");
 provider.addScope("https://www.googleapis.com/auth/meetings.space.settings");
+provider.addScope("https://www.googleapis.com/auth/chat.messages.create");
+provider.addScope("https://www.googleapis.com/auth/chat.spaces.readonly");
+provider.addScope("https://www.googleapis.com/auth/contacts.readonly");
 
 let isSigningIn = false;
 let cachedAccessToken: string | null = null;

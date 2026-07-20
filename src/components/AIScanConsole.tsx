@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { AIAnalysisResponse, DayTradeSetup, StockMetric } from "../types";
-import { Search, Sparkles, TrendingUp, ShieldCheck, AlertTriangle, ExternalLink, RefreshCw, Calculator, Compass, ArrowUpRight, FileDown, CalendarPlus, Check } from "lucide-react";
+import { Search, Sparkles, TrendingUp, ShieldCheck, AlertTriangle, ExternalLink, RefreshCw, Calculator, Compass, ArrowUpRight, FileDown, CalendarPlus, Check, Cpu, Briefcase, Share2, GraduationCap, Video } from "lucide-react";
 import { saveToDrive, scheduleCalendarEvent } from "../lib/workspace";
 
 interface AIScanConsoleProps {
@@ -631,6 +631,97 @@ Rationale: ${setup.explanation}`,
           )}
         </div>
 
+      </div>
+
+      {/* Sera's Autonomous Orchestrator (App Management) */}
+      <div className="bg-gradient-to-br from-indigo-500/10 to-neutral-900 border border-indigo-500/20 rounded-2xl p-6">
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-neutral-800/40">
+          <h4 className="font-bold text-lg text-white font-sans flex items-center gap-2">
+            <Cpu className="text-indigo-400" size={20} />
+            Sera's Autonomous Orchestrator
+          </h4>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse" />
+            <span className="font-mono text-emerald-400 text-[10px] uppercase font-bold tracking-widest">Active Management Online</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-neutral-950/50 border border-neutral-800 p-4 rounded-xl hover:border-indigo-500/30 transition-all group">
+            <div className="text-indigo-400 mb-3"><Briefcase size={16} /></div>
+            <h5 className="font-bold text-white text-xs mb-1">Portfolio Rebalance</h5>
+            <p className="text-[10px] text-neutral-500 leading-relaxed mb-4">AI suggested adjusting QQQ weight by +5% based on tech momentum.</p>
+            <div className="space-y-2">
+              <button className="w-full py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/40 rounded-lg text-[10px] font-bold uppercase transition-all">
+                Auto-Rebalance
+              </button>
+              <div className="text-[8px] font-mono text-neutral-700 uppercase flex justify-between">
+                <span>Last Run: 2h ago</span>
+                <span className="text-emerald-500">Success</span>
+              </div>
+            </div>
+          </div>
+          <div className="bg-neutral-950/50 border border-neutral-800 p-4 rounded-xl hover:border-indigo-500/30 transition-all group">
+            <div className="text-emerald-400 mb-3"><Share2 size={16} /></div>
+            <h5 className="font-bold text-white text-xs mb-1">Ad Spend Optimization</h5>
+            <p className="text-[10px] text-neutral-500 leading-relaxed mb-4">Detected 40% better conversion on Instagram. Reallocating $500.</p>
+            <div className="space-y-2">
+              <button className="w-full py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 rounded-lg text-[10px] font-bold uppercase transition-all">
+                Optimize Spend
+              </button>
+              <div className="text-[8px] font-mono text-neutral-700 uppercase flex justify-between">
+                <span>Last Run: 15m ago</span>
+                <span className="text-emerald-500">Live</span>
+              </div>
+            </div>
+          </div>
+          <div className="bg-neutral-950/50 border border-neutral-800 p-4 rounded-xl hover:border-indigo-500/30 transition-all group">
+            <div className="text-rose-400 mb-3"><GraduationCap size={16} /></div>
+            <h5 className="font-bold text-white text-xs mb-1">Educational Scheduling</h5>
+            <p className="text-[10px] text-neutral-500 leading-relaxed mb-4">User struggling with RSI divergence. Enrolling in Module 2.</p>
+            <div className="space-y-2">
+              <button className="w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/40 rounded-lg text-[10px] font-bold uppercase transition-all">
+                Schedule Lesson
+              </button>
+              <div className="text-[8px] font-mono text-neutral-700 uppercase flex justify-between">
+                <span>Next Run: tomorrow</span>
+                <span className="text-indigo-500">Planned</span>
+              </div>
+            </div>
+          </div>
+          <div className="bg-neutral-950/50 border border-neutral-800 p-4 rounded-xl hover:border-indigo-500/30 transition-all group">
+            <div className="text-blue-400 mb-3"><Video size={16} /></div>
+            <h5 className="font-bold text-white text-xs mb-1">Meeting Coordination</h5>
+            <p className="text-[10px] text-neutral-500 leading-relaxed mb-4">High volatility alert. Scheduling team sync on Google Meet.</p>
+            <div className="space-y-2">
+              <button className="w-full py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/40 rounded-lg text-[10px] font-bold uppercase transition-all">
+                Launch Sync
+              </button>
+              <div className="text-[8px] font-mono text-neutral-700 uppercase flex justify-between">
+                <span>Trigger: $VIX &gt; 25</span>
+                <span className="text-neutral-600">Standby</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Autonomous Audit Log */}
+        <div className="mt-6 bg-neutral-950 border border-neutral-800 rounded-xl p-4">
+          <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest mb-3">Orchestrator Audit Log</p>
+          <div className="space-y-1.5 max-h-24 overflow-y-auto pr-2 custom-scrollbar">
+            {[
+              "03:22:15 - [SEO] AI Generated meta descriptions for 'Blackwell Launch'",
+              "03:15:42 - [AUTH] Synchronized Google Chat spaces for user broadcast",
+              "02:45:01 - [RISK] Adjusted NVDA stop-loss to +2% trailing based on low ATR",
+              "02:12:10 - [MARKET] Sentiment Gauge shift detected (Bearish -> Neutral)",
+              "01:55:33 - [EDU] Module 1 completion logged. Triggering Module 2 recommendation.",
+            ].map((log, i) => (
+              <p key={i} className="text-[9px] font-mono text-neutral-600 truncate">
+                <span className="text-indigo-500/60 mr-2">SERA_CORE:</span> {log}
+              </p>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Calculator Section: Compounding Simulator (Day Trade Volatility vs Long-Term Holdings) */}
