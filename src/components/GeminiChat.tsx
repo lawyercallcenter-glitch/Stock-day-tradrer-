@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Send, Sparkles, User, HelpCircle, Bot, TrendingUp, BookOpen, Calculator, Loader2, Volume2, VolumeX, Mic, MicOff, Globe, ExternalLink, Phone, PhoneOff, Radio } from "lucide-react";
+import { Send, Sparkles, User, HelpCircle, Bot, TrendingUp, BookOpen, Calculator, Loader2, Volume2, VolumeX, Mic, MicOff, Globe, ExternalLink, Phone, PhoneOff, Radio, Database } from "lucide-react";
 import { pcmToBase64 } from "../lib/audio";
+import { db, auth } from "../lib/firebase";
+import { collection, getDocs } from "firebase/firestore";
 
 interface Message {
   id: string;
@@ -69,6 +71,36 @@ export default function GeminiChat() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+
+  // User Context State
+  const [portfolios, setPortfolios] = useState<any[]>([]);
+  const [journalEntries, setJournalEntries] = useState<any[]>([]);
+  const [contextLoading, setContextLoading] = useState(false);
+
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    setContextLoading(true);
+    // Fetch portfolios
+    const fetchContext = async () => {
+      try {
+        const pSnap = await getDocs(collection(db, "users", user.uid, "portfolios"));
+        const pData = pSnap.docs.map(d => d.data());
+        setPortfolios(pData);
+
+        const jSnap = await getDocs(collection(db, "users", user.uid, "journal"));
+        const jData = jSnap.docs.map(d => d.data());
+        setJournalEntries(jData);
+      } catch (err) {
+        console.error("Error fetching AI context:", err);
+      } finally {
+        setContextLoading(false);
+      }
+    };
+
+    fetchContext();
+  }, []);
 
   // Initialize Speech Recognition
   useEffect(() => {
@@ -304,6 +336,60 @@ export default function GeminiChat() {
     }
   }, []);
 
+  const handleAnalyzeContext = async () => {
+    if (loading || contextLoading) return;
+    
+    setLoading(true);
+    setError(null);
+
+    const userMsg: Message = {
+      id: Math.random().toString(36).substring(2, 9),
+      role: "user",
+      text: "Analyze my portfolios and trade journal. Give me an audit of my performance and psychology.",
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+
+    try {
+      const res = await fetch("/api/gemini/analyze-context", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ portfolios, journalEntries }),
+      });
+
+      if (!res.ok) throw new Error("Failed to analyze context.");
+
+      const data = await res.json();
+      
+      let analysisText = `## Portfolio Audit Results\n\n**Health Score: ${data.healthScore}/100**\n\n${data.summary}\n\n### Key Insights\n`;
+      data.insights.forEach((insight: string) => {
+        analysisText += `- ${insight}\n`;
+      });
+      
+      analysisText += `\n### Recommendations\n`;
+      data.recommendations.forEach((rec: any) => {
+        analysisText += `- **${rec.action}**: ${rec.rationale}\n`;
+      });
+      
+      analysisText += `\n### Psychology Audit\n${data.psychologyAudit}`;
+
+      const aiMsg: Message = {
+        id: Math.random().toString(36).substring(2, 9),
+        role: "assistant",
+        text: analysisText,
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, aiMsg]);
+      if (autoRead) speakText(analysisText, aiMsg.id);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSend = async (textToSend: string) => {
     if (!textToSend.trim() || loading) return;
 
@@ -430,7 +516,7 @@ export default function GeminiChat() {
 
           <button
             onClick={toggleLiveMode}
-            className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold font-mono text-[10px] tracking-wider uppercase transition-all mb-4 ${
+            className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold font-mono text-[10px] tracking-wider uppercase transition-all mb-2 ${
               liveMode
                 ? "bg-rose-500/20 text-rose-400 border border-rose-500/40 hover:bg-rose-500/30"
                 : "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30"
@@ -445,6 +531,14 @@ export default function GeminiChat() {
                 <Phone size={14} /> Start Live Voice Session
               </>
             )}
+          </button>
+
+          <button
+            onClick={() => handleAnalyzeContext()}
+            disabled={loading || contextLoading || portfolios.length === 0}
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold font-mono text-[10px] tracking-wider uppercase transition-all mb-4 bg-amber-500/20 text-amber-400 border border-amber-500/40 hover:bg-amber-500/30 disabled:opacity-50"
+          >
+            <Database size={14} /> Analyze My Data
           </button>
 
           {/* Vocal Engine Control Center */}

@@ -1,30 +1,38 @@
 {
   "entities": {
-    "WatchlistItem": {
-      "title": "WatchlistItem",
-      "description": "A stock that the user is actively monitoring in their watchlist",
-      "type": "object",
-      "properties": {
-        "symbol": { "type": "string", "maxLength": 10 },
-        "addedAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["symbol", "addedAt"]
-    },
-    "StockAlert": {
-      "title": "StockAlert",
-      "description": "An active alert set by the user for a specific stock price target, trendline break, or volume change",
+    "Watchlist": {
+      "title": "Watchlist",
+      "description": "A named group of stocks the user is monitoring",
       "type": "object",
       "properties": {
         "id": { "type": "string", "maxLength": 128 },
-        "symbol": { "type": "string", "maxLength": 10 },
-        "type": { "type": "string", "enum": ["price_above", "price_below", "volume_spike", "trendline_break"] },
-        "targetValue": { "type": "number" },
-        "active": { "type": "boolean" },
-        "triggered": { "type": "boolean" },
-        "message": { "type": "string", "maxLength": 256 },
+        "name": { "type": "string", "maxLength": 64 },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "symbol", "type", "targetValue", "active", "triggered", "createdAt"]
+      "required": ["id", "name", "createdAt"]
+    },
+    "WatchlistItem": {
+      "title": "WatchlistItem",
+      "description": "A stock entry within a specific watchlist",
+      "type": "object",
+      "properties": {
+        "symbol": { "type": "string", "maxLength": 10 },
+        "watchlistId": { "type": "string", "maxLength": 128 },
+        "addedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["symbol", "watchlistId", "addedAt"]
+    },
+    "Portfolio": {
+      "title": "Portfolio",
+      "description": "A named investment portfolio containing multiple positions (bags)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 64 },
+        "description": { "type": "string", "maxLength": 256 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "createdAt"]
     },
     "StockBag": {
       "title": "StockBag",
@@ -32,6 +40,7 @@
       "type": "object",
       "properties": {
         "id": { "type": "string", "maxLength": 128 },
+        "portfolioId": { "type": "string", "maxLength": 128 },
         "symbol": { "type": "string", "maxLength": 10 },
         "name": { "type": "string", "maxLength": 128 },
         "type": { "type": "string", "enum": ["day_trade", "long_term"] },
@@ -39,7 +48,21 @@
         "averageEntry": { "type": "number" },
         "purchaseDate": { "type": "string", "maxLength": 10 }
       },
-      "required": ["id", "symbol", "name", "type", "shares", "averageEntry", "purchaseDate"]
+      "required": ["id", "portfolioId", "symbol", "name", "type", "shares", "averageEntry", "purchaseDate"]
+    },
+    "JournalEntry": {
+      "title": "JournalEntry",
+      "description": "A reflective entry in the user's trading journal about a trade, strategy, or market observation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 128 },
+        "content": { "type": "string", "maxLength": 2048 },
+        "symbols": { "type": "array", "items": { "type": "string" } },
+        "sentiment": { "type": "string", "enum": ["Bullish", "Bearish", "Neutral"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "content", "createdAt"]
     },
     "TradeLog": {
       "title": "TradeLog",
@@ -59,21 +82,33 @@
     }
   },
   "firestore": {
+    "/users/{userId}/portfolios/{portfolioId}": {
+      "schema": "Portfolio",
+      "description": "User's named portfolios"
+    },
+    "/users/{userId}/watchlists/{watchlistId}": {
+      "schema": "Watchlist",
+      "description": "User's named watchlists"
+    },
+    "/users/{userId}/journal/{entryId}": {
+      "schema": "JournalEntry",
+      "description": "User's trading journal entries"
+    },
     "/users/{userId}/watchlist/{symbol}": {
       "schema": "WatchlistItem",
-      "description": "User's personalized watchlist of monitored stocks"
+      "description": "User's default/Legacy watchlist items"
     },
     "/users/{userId}/alerts/{alertId}": {
       "schema": "StockAlert",
-      "description": "Active in-app notification alerts for price targets or volume events"
+      "description": "Active in-app notification alerts"
     },
     "/users/{userId}/bags/{bagId}": {
       "schema": "StockBag",
-      "description": "Durable portfolio allocations (bags) synced to the cloud"
+      "description": "Legacy portfolio allocations"
     },
     "/users/{userId}/logs/{logId}": {
       "schema": "TradeLog",
-      "description": "Chronological history of purchase and sale transactions for portfolio tracking"
+      "description": "Legacy trade logs"
     }
   }
 }

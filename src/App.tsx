@@ -5,6 +5,9 @@ import StockFundamentals from "./components/StockFundamentals";
 import TradeModal from "./components/TradeModal";
 import TradeJournalForm from "./components/TradeJournalForm";
 import TradeBagsManager from "./components/TradeBagsManager";
+import PortfolioManager from "./components/PortfolioManager";
+import WatchlistManager from "./components/WatchlistManager";
+import JournalManager from "./components/JournalManager";
 import AIScanConsole from "./components/AIScanConsole";
 import GeminiChat from "./components/GeminiChat";
 import RecommendationEngine from "./components/RecommendationEngine";
@@ -74,7 +77,7 @@ export default function App() {
   const [loadingData, setLoadingData] = useState(false);
   const [chartViewMode, setChartViewMode] = useState<"day_trade" | "long_term">("day_trade");
   const [theme, setTheme] = useState<"midnight" | "daylight">("midnight");
-  const [selectedTab, setSelectedTab] = useState<"visualizer" | "bags" | "ai_console" | "gemini_chat" | "recommendations" | "pricing" | "marketing" | "progress" | "workspace" | "google_meet" | "contacts" | "journal">("visualizer");
+  const [selectedTab, setSelectedTab] = useState<"visualizer" | "bags" | "ai_console" | "gemini_chat" | "recommendations" | "pricing" | "marketing" | "progress" | "workspace" | "google_meet" | "contacts" | "journal" | "portfolios" | "watchlists">("visualizer");
   const [pendingTickerSelection, setPendingTickerSelection] = useState<string | null>(null);
   const [tradeModalTicker, setTradeModalTicker] = useState<string | null>(null);
 
@@ -640,10 +643,22 @@ export default function App() {
                 <LineChart size={13} /> Screen
               </button>
               <button
-                onClick={() => setSelectedTab("bags")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "bags" ? "bg-neutral-850 text-emerald-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
+                onClick={() => setSelectedTab("portfolios")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "portfolios" ? "bg-neutral-850 text-emerald-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
               >
-                <Briefcase size={13} /> Real Bags
+                <Briefcase size={13} /> Portfolios
+              </button>
+              <button
+                onClick={() => setSelectedTab("watchlists")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "watchlists" ? "bg-neutral-850 text-emerald-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
+              >
+                <Star size={13} /> Watchlists
+              </button>
+              <button
+                onClick={() => setSelectedTab("journal")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "journal" ? "bg-neutral-850 text-emerald-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
+              >
+                <BookOpen size={13} /> Journal
               </button>
               <button
                 onClick={() => setSelectedTab("ai_console")}
@@ -655,7 +670,7 @@ export default function App() {
                 onClick={() => setSelectedTab("gemini_chat")}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "gemini_chat" ? "bg-neutral-850 text-emerald-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
               >
-                <Sparkles size={13} /> Gemini Chat
+                <Sparkles size={13} /> Gemini AI
               </button>
               <button
                 onClick={() => setSelectedTab("recommendations")}
@@ -1055,6 +1070,24 @@ export default function App() {
                 </div>
 
               </div>
+            </div>
+          )}
+
+          {selectedTab === "portfolios" && (
+            <div className="animate-fadeIn">
+              <PortfolioManager />
+            </div>
+          )}
+
+          {selectedTab === "watchlists" && (
+            <div className="animate-fadeIn">
+              <WatchlistManager />
+            </div>
+          )}
+
+          {selectedTab === "journal" && (
+            <div className="animate-fadeIn">
+              <JournalManager />
             </div>
           )}
 

@@ -29,17 +29,46 @@ export interface DayTradeSetup {
   explanation: string;
 }
 
+export interface Portfolio {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+}
+
+export interface Watchlist {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+
+export interface WatchlistItem {
+  symbol: string;
+  watchlistId: string;
+  addedAt: string;
+}
+
+export interface JournalEntry {
+  id: string;
+  title: string;
+  content: string;
+  symbols?: string[];
+  sentiment?: "Bullish" | "Bearish" | "Neutral";
+  createdAt: string;
+}
+
 export interface StockBagItem {
   id: string;
+  portfolioId: string;
   symbol: string;
   name: string;
   type: "day_trade" | "long_term";
   shares: number;
   averageEntry: number;
-  currentPrice: number;
+  currentPrice?: number;
   purchaseDate: string;
-  pnl: number;
-  pnlPercent: number;
+  pnl?: number;
+  pnlPercent?: number;
 }
 
 export interface TradeLog {

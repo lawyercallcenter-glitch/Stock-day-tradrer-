@@ -1089,6 +1089,79 @@ What ticker symbol or trading setup should we prepare a tactical risk plan for n
     }
   });
 
+  // Endpoint: AI-Powered Personalized Portfolio & Journal Analyst
+  app.post("/api/gemini/analyze-context", async (req, res) => {
+    const { portfolios, journalEntries, query } = req.body;
+    
+    try {
+      const ai = getGeminiClient();
+      
+      const context = `
+        User Portfolios: ${JSON.stringify(portfolios)}
+        User Trade Journal Entries: ${JSON.stringify(journalEntries)}
+      `;
+
+      const prompt = `You are Sera, an elite quantitative analyst and trading partner. 
+      Analyze the user's current portfolios and trade journal context provided below:
+      ${context}
+
+      User Query: "${query || "Provide a general audit of my current trading performance and portfolio health."}"
+
+      Your goal is to provide high-conviction, data-driven insights. 
+      1. Identify strengths and weaknesses in their current holdings.
+      2. Analyze their trading psychology based on the journal entries.
+      3. Suggest 3 specific tactical actions (e.g., trim a position, hedge, add to a winner).
+      4. Provide a "Portfolio Health Score" (1-100).
+
+      Keep your tone professional, sharp, and encouraging but direct.
+      Return a strictly formatted JSON response:
+      {
+        "summary": "Deep dive summary of the current state.",
+        "insights": ["Insight 1", "Insight 2", ...],
+        "recommendations": [
+          { "action": "TRIM/ADD/HOLD [symbol]", "rationale": "Why this action is needed." }
+        ],
+        "psychologyAudit": "Analysis of the trader's mental state and discipline based on journal.",
+        "healthScore": 85
+      }`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            required: ["summary", "insights", "recommendations", "psychologyAudit", "healthScore"],
+            properties: {
+              summary: { type: Type.STRING },
+              insights: { type: Type.ARRAY, items: { type: Type.STRING } },
+              recommendations: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  required: ["action", "rationale"],
+                  properties: {
+                    action: { type: Type.STRING },
+                    rationale: { type: Type.STRING }
+                  }
+                }
+              },
+              psychologyAudit: { type: Type.STRING },
+              healthScore: { type: Type.INTEGER }
+            }
+          }
+        }
+      });
+
+      const parsedData = robustParseJSON(response.text || "{}");
+      res.json(parsedData);
+    } catch (err) {
+      console.error("Context analysis error:", err);
+      res.status(500).json({ error: "Failed to perform personalized analysis." });
+    }
+  });
+
   server.listen(PORT, "0.0.0.0", () => {
     console.log(`Express server running on http://0.0.0.0:${PORT}`);
   });

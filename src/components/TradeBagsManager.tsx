@@ -58,6 +58,7 @@ export default function TradeBagsManager({ presets, user, accessToken }: TradeBa
 
             loadedBags.push({
               id: docRef.id,
+              portfolioId: "legacy",
               symbol: data.symbol,
               name: data.name,
               type: data.type,
@@ -191,6 +192,7 @@ export default function TradeBagsManager({ presets, user, accessToken }: TradeBa
         
         targetBag = {
           id: bagId,
+          portfolioId: "legacy",
           symbol: symbol.toUpperCase(),
           name: companyName,
           type,
