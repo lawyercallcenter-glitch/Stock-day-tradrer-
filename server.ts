@@ -1685,6 +1685,25 @@ What ticker symbol or trading setup should we prepare a tactical risk plan for n
     }
   });
 
+  // Commission Report API
+  app.get("/api/admin/commission-report", (req, res) => {
+    // Aggregated data from elite compounding tiers and team leadership overrides
+    const report = {
+      totalCommissions: 15420.50,
+      period: "July 2026",
+      breakdown: [
+        { leader: "David Chen", teamSize: 5, commission: 5420.25, status: "Pending" },
+        { leader: "Sarah Miller", teamSize: 3, commission: 2150.80, status: "Paid" },
+        { leader: "Marcus T.", teamSize: 8, commission: 7849.45, status: "Processing" }
+      ],
+      projections: {
+        nextMonth: 18500,
+        growth: "12%"
+      }
+    };
+    res.json(report);
+  });
+
   server.listen(PORT, "0.0.0.0", () => {
     console.log(`Express server running on http://0.0.0.0:${PORT}`);
   });

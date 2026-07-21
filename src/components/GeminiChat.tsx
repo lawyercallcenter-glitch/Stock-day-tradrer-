@@ -13,6 +13,10 @@ interface Message {
   searchQueries?: string[];
 }
 
+interface GeminiChatProps {
+  isAiEnabled: boolean;
+}
+
 const STARTER_PROMPTS = [
   {
     label: "Analyze TSLA breakout",
@@ -36,12 +40,14 @@ const STARTER_PROMPTS = [
   },
 ];
 
-export default function GeminiChat() {
+export default function GeminiChat({ isAiEnabled }: GeminiChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "initial-assistant-msg",
       role: "assistant",
-      text: "Greetings. I am Sera, your elite trading co-pilot. Whether you are scalping short-term volatility in day trades or compounding strategic generational wealth in long-term portfolios, I am here with pure data-driven conviction. No assumptions, only logical setups. What asset or strategy are we scanning today?",
+      text: isAiEnabled 
+        ? "Greetings. I am Sera, your elite trading co-pilot. Whether you are scalping short-term volatility in day trades or compounding strategic generational wealth in long-term portfolios, I am here with pure data-driven conviction. No assumptions, only logical setups. What asset or strategy are we scanning today?"
+        : "AI Services are currently LOCKED. Enable 'AI Intelligence' in the top terminal bar to activate Sera's co-pilot engine.",
       timestamp: new Date(),
     },
   ]);
@@ -808,27 +814,29 @@ export default function GeminiChat() {
           )}
 
           <div className="flex items-end gap-3">
-            <div className="flex-1 bg-neutral-950 border border-neutral-850 focus-within:border-emerald-500/50 rounded-xl transition-all flex items-center px-3.5 py-1.5">
+            <div className={`flex-1 bg-neutral-950 border rounded-xl transition-all flex items-center px-3.5 py-1.5 ${isAiEnabled ? "border-neutral-850 focus-within:border-emerald-500/50" : "border-neutral-900 opacity-50"}`}>
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Query technical catalyst, scale entries, or analyze portfolio moats..."
+                disabled={!isAiEnabled}
+                placeholder={isAiEnabled ? "Query technical catalyst, scale entries, or analyze portfolio moats..." : "AI Intelligence is currently disabled."}
                 className="w-full bg-transparent text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none resize-none max-h-16 py-1 font-sans text-left mr-2"
                 rows={1}
               />
               <button
                 type="button"
                 onClick={toggleListening}
-                className={`p-1.5 rounded-lg transition-all cursor-pointer flex-shrink-0 ${isListening ? "bg-rose-500/20 text-rose-400 animate-pulse border border-rose-500/40" : "text-neutral-500 hover:text-neutral-300 hover:bg-neutral-900"}`}
-                title={isListening ? "Stop listening" : "Speak to type query"}
+                disabled={!isAiEnabled}
+                className={`p-1.5 rounded-lg transition-all flex-shrink-0 ${!isAiEnabled ? "text-neutral-700" : isListening ? "bg-rose-500/20 text-rose-400 animate-pulse border border-rose-500/40 cursor-pointer" : "text-neutral-500 hover:text-neutral-300 hover:bg-neutral-900 cursor-pointer"}`}
+                title={!isAiEnabled ? "AI Disabled" : isListening ? "Stop listening" : "Speak to type query"}
               >
                 {isListening ? <MicOff size={15} /> : <Mic size={15} />}
               </button>
             </div>
             <button
               type="submit"
-              disabled={!input.trim() || loading}
+              disabled={!input.trim() || loading || !isAiEnabled}
               className="h-10 w-10 bg-emerald-500 hover:bg-emerald-600 active:scale-[0.97] rounded-xl flex items-center justify-center text-neutral-950 transition-all disabled:opacity-50 cursor-pointer flex-shrink-0"
             >
               <Send size={15} />

@@ -54,6 +54,38 @@ export default function GoogleClassroomIntegration({ accessToken }: ClassroomPro
     }
   };
 
+  const [generatingDoc, setGeneratingDoc] = useState(false);
+
+  const generateDocumentation = async () => {
+    const course = courses.find(c => c.id === selectedCourse);
+    if (!course) return;
+    
+    setGeneratingDoc(true);
+    try {
+      const res = await fetch("/api/gemini/analyze-context", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          prompt: `Create a professional trading lesson documentation for the course "${course.name}". 
+          Include: 
+          1. Lesson Objective
+          2. Key Technical Concepts
+          3. Risk Management Strategy
+          4. Actionable Steps for Students.
+          Keep it concise, professional, and data-driven.`
+        })
+      });
+      const data = await res.json();
+      if (data && data.analysis) {
+        setAnnouncement(data.analysis);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setGeneratingDoc(false);
+    }
+  };
+
   const postAnnouncement = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!accessToken || !selectedCourse || !announcement.trim()) return;
@@ -226,9 +258,21 @@ export default function GoogleClassroomIntegration({ accessToken }: ClassroomPro
           </h3>
           {selectedCourse ? (
             <form onSubmit={postAnnouncement} className="space-y-4">
-              <div className="p-3 bg-neutral-950 rounded-xl border border-neutral-850">
-                <p className="text-[10px] font-mono text-neutral-500 uppercase mb-2">Targeting Course:</p>
-                <p className="text-xs font-bold text-white">{courses.find(c => c.id === selectedCourse)?.name}</p>
+              <div className="p-3 bg-neutral-950 rounded-xl border border-neutral-850 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-mono text-neutral-500 uppercase mb-2">Targeting Course:</p>
+                  <p className="text-xs font-bold text-white">{courses.find(c => c.id === selectedCourse)?.name}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={generateDocumentation}
+                  disabled={generatingDoc}
+                  className="p-2 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-lg hover:bg-rose-500/20 transition-all flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest"
+                  title="Generate Documentation with AI"
+                >
+                  {generatingDoc ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                  AI Draft
+                </button>
               </div>
               <textarea
                 value={announcement}

@@ -15,10 +15,10 @@ interface PricingTier {
 
 const PRICING_TIERS: PricingTier[] = [
   {
-    name: "Explorer (Grand Launch: Free 14 Days)",
+    name: "Explorer (7-Day Free Trial)",
     price: "$2.99",
     period: "month",
-    description: "Essential market metrics and static breakout scans for retail hobbyists.",
+    description: "Full co-pilot access for 7 days, then just $2.99/mo. Essential market metrics and static breakout scans.",
     icon: Zap,
     color: "border-neutral-800/80 text-neutral-400 hover:border-neutral-700",
     features: [
@@ -127,10 +127,10 @@ export default function PricingPage({ isAdmin }: PricingPageProps) {
             <Sparkles size={11} /> Sera Elite Trade Compounding
           </div>
           <h2 className="text-3xl font-bold text-white tracking-tight font-sans">
-            Scale Volatility, Minimize Risk, Build Compound Generational Wealth
+            7-Day Free Trial: Scale Volatility with Sera AI Co-Pilot
           </h2>
           <p className="text-sm text-neutral-400 leading-relaxed">
-            Choose the strategic tier tailored to your compounding targets. Get instant access to deep live-grounded AI recommendations, premium indicators, durable cloud storage, and automated trading calendars.
+            Experience elite intelligence for $0 today. Full access to real-time grounded scans, automated trade journaling, and professional academy courses. Just $2.99/mo after your trial.
           </p>
           
           <div className="pt-4 flex flex-wrap justify-center gap-6 text-xs text-neutral-400 font-mono">

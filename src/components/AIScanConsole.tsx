@@ -8,9 +8,10 @@ interface AIScanConsoleProps {
   onSelectTicker: (symbol: string) => void;
   onProposeTicker: (symbol: string) => void;
   accessToken: string | null;
+  isAiEnabled: boolean;
 }
 
-export default function AIScanConsole({ presets, onSelectTicker, onProposeTicker, accessToken }: AIScanConsoleProps) {
+export default function AIScanConsole({ presets, onSelectTicker, onProposeTicker, accessToken, isAiEnabled }: AIScanConsoleProps) {
   // Custom Ticker Search
   const [searchSymbol, setSearchSymbol] = useState("NVDA");
   const [analysis, setAnalysis] = useState<AIAnalysisResponse | null>(null);
@@ -343,12 +344,16 @@ Rationale: ${setup.explanation}`,
                 />
               </div>
               <button
-                onClick={() => analyzeTicker(searchSymbol)}
-                disabled={searching}
-                className="bg-emerald-500 hover:bg-emerald-600 disabled:bg-neutral-800 disabled:text-neutral-500 text-neutral-950 font-bold px-4 py-2 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer"
+                onClick={() => isAiEnabled && analyzeTicker(searchSymbol)}
+                disabled={searching || !isAiEnabled}
+                className={`px-4 py-2 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all font-bold ${
+                  !isAiEnabled 
+                    ? "bg-neutral-800 text-neutral-500 cursor-not-allowed opacity-50" 
+                    : "bg-emerald-500 hover:bg-emerald-600 text-neutral-950 cursor-pointer"
+                }`}
               >
                 {searching ? <RefreshCw className="animate-spin" size={14} /> : <Sparkles size={14} />}
-                Analyze
+                {isAiEnabled ? "Analyze" : "AI Locked"}
               </button>
             </div>
 
@@ -530,7 +535,7 @@ Rationale: ${setup.explanation}`,
                     onClick={() => setAutoScan(!autoScan)}
                     className={`w-8 h-4 rounded-full transition-all relative ${autoScan ? "bg-emerald-500" : "bg-neutral-800"}`}
                   >
-                    <div className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all ${autoScan ? "left-4.5" : "left-0.5"}`} />
+                    <div className={`absolute top-0.5 h-3 w-3 rounded-full transition-all ${autoScan ? "left-[18px] bg-white" : "left-0.5 bg-neutral-500"}`} />
                   </button>
                 </div>
                 <button

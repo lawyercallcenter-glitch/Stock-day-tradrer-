@@ -108,10 +108,8 @@ export default function JournalManager() {
   };
 
   const autoApproveDraft = async () => {
-    if (!title || !content) {
-      await generateAIEntry();
-    }
-    // The user requested: "SI AGENT SHOULD DO THE JOURNAL ENTRIES I WILL JUST RAD AND APPROBE THEM"
+    setIsAdding(true);
+    await generateAIEntry();
   };
 
   const handleDeleteEntry = async (id: string) => {
@@ -130,12 +128,21 @@ export default function JournalManager() {
           <BookOpen className="text-amber-400" size={24} />
           <h2 className="text-2xl font-bold text-white tracking-tight">Journal AI Analyzed</h2>
         </div>
-        <button
-          onClick={() => setIsAdding(!isAdding)}
-          className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-neutral-950 px-4 py-2 rounded-xl font-bold text-sm transition-all shadow-lg shadow-amber-500/20"
-        >
-          {isAdding ? "Close Editor" : <><Plus size={18} /> New Entry</>}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={autoApproveDraft}
+            className="flex items-center gap-2 bg-neutral-900 border border-amber-500/30 text-amber-400 px-4 py-2 rounded-xl font-bold text-sm transition-all hover:bg-amber-500/10 active:scale-95"
+            title="Auto-fill journal with AI"
+          >
+            <Sparkles size={18} /> Sera Auto-Fill
+          </button>
+          <button
+            onClick={() => setIsAdding(!isAdding)}
+            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-neutral-950 px-4 py-2 rounded-xl font-bold text-sm transition-all shadow-lg shadow-amber-500/20"
+          >
+            {isAdding ? "Close Editor" : <><Plus size={18} /> New Entry</>}
+          </button>
+        </div>
       </div>
 
       <AnimatePresence>

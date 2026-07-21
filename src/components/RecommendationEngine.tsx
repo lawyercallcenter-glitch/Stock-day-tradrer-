@@ -20,9 +20,10 @@ interface RecommendationEngineProps {
   onSelectTicker: (symbol: string) => void;
   onProposeTicker: (symbol: string) => void;
   accessToken: string | null;
+  isAiEnabled: boolean;
 }
 
-export default function RecommendationEngine({ onSelectTicker, onProposeTicker, accessToken }: RecommendationEngineProps) {
+export default function RecommendationEngine({ onSelectTicker, onProposeTicker, accessToken, isAiEnabled }: RecommendationEngineProps) {
   const [recommendations, setRecommendations] = useState<StockRecommendation[]>([]);
   const [sources, setSources] = useState<{ title: string; uri: string }[]>([]);
   const [loading, setLoading] = useState(false);
@@ -137,12 +138,16 @@ News Catalyst: ${rec.news}`,
             </p>
           </div>
           <button
-            onClick={fetchRecommendations}
-            disabled={loading}
-            className="flex items-center gap-2 bg-neutral-950 border border-neutral-800 hover:border-emerald-500/30 text-neutral-300 hover:text-emerald-400 font-mono text-xs px-4 py-2 rounded-xl transition-all cursor-pointer self-start md:self-auto disabled:opacity-50"
+            onClick={() => isAiEnabled && fetchRecommendations()}
+            disabled={loading || !isAiEnabled}
+            className={`flex items-center gap-2 font-mono text-xs px-4 py-2 rounded-xl transition-all self-start md:self-auto ${
+              !isAiEnabled
+                ? "bg-neutral-800 text-neutral-500 cursor-not-allowed opacity-50 border border-neutral-700"
+                : "bg-neutral-950 border border-neutral-800 hover:border-emerald-500/30 text-neutral-300 hover:text-emerald-400 cursor-pointer"
+            }`}
           >
             <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
-            {loading ? "SCANNING GLOBAL EXCHANGES..." : "SCAN VOLATILITY MOVERS"}
+            {loading ? "SCANNING GLOBAL EXCHANGES..." : isAiEnabled ? "SCAN VOLATILITY MOVERS" : "AI SCAN LOCKED"}
           </button>
         </div>
       </div>

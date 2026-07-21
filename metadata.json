@@ -1,6 +1,6 @@
 {
-  "name": "Remix: Stock Day Trader and Portfolio Analyzer",
-  "description": "An elite AI-powered financial analyst dashboard. Includes Sera AI Intel for real-time web-grounded stock breakouts, automated trade journaling with AI approval flows, and a comprehensive Academy with guided courses, quizzes, and certificates.",
+  "name": "Remix: AI Day Trader & Academy",
+  "description": "The ultimate AI co-pilot for traders. Featuring Sera AI for real-time market intel, automated trade journaling, and a professional Academy with certificates. Now offering a 7-day free trial for elite features.",
   "requestFramePermissions": [
     "microphone",
     "screen-wake-lock"

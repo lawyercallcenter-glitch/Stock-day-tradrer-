@@ -744,7 +744,7 @@ export default function App() {
               onClick={() => setIsAiEnabled(!isAiEnabled)}
               className={`w-9 h-5 rounded-full transition-all relative border ${isAiEnabled ? "bg-emerald-500/20 border-emerald-500/50" : "bg-neutral-800 border-neutral-700"}`}
             >
-              <div className={`absolute top-0.5 h-3.5 w-3.5 rounded-full shadow-sm transition-all ${isAiEnabled ? "left-4.5 bg-emerald-400" : "left-0.5 bg-neutral-500"}`} />
+              <div className={`absolute top-0.5 h-3.5 w-3.5 rounded-full shadow-sm transition-all ${isAiEnabled ? "left-5 bg-emerald-400" : "left-0.5 bg-neutral-500"}`} />
             </button>
           </div>
 
@@ -1315,13 +1315,14 @@ export default function App() {
                 onSelectTicker={(sym) => setActiveTicker(sym)} 
                 onProposeTicker={(sym) => setPendingTickerSelection(sym)}
                 accessToken={accessToken} 
+                isAiEnabled={isAiEnabled}
               />
             </div>
           )}
 
           {selectedTab === "gemini_chat" && (
             <div className="animate-fadeIn">
-              <GeminiChat />
+              <GeminiChat isAiEnabled={isAiEnabled} />
             </div>
           )}
 
@@ -1331,6 +1332,7 @@ export default function App() {
                 onSelectTicker={(sym) => { setActiveTicker(sym); setSelectedTab("visualizer"); }} 
                 onProposeTicker={(sym) => setPendingTickerSelection(sym)}
                 accessToken={accessToken} 
+                isAiEnabled={isAiEnabled}
               />
             </div>
           )}

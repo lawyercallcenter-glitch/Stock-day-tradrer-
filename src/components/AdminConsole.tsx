@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Shield, Users, Activity, Settings, Zap, Bell, Database, Cpu, Lock, Globe, Server, BarChart3, MessageSquare, Trash2, CheckCircle2, AlertCircle, TrendingUp, RefreshCw } from "lucide-react";
+import { Shield, Users, Activity, Settings, Zap, Bell, Database, Cpu, Lock, Globe, Server, BarChart3, MessageSquare, Trash2, CheckCircle2, AlertCircle, TrendingUp, RefreshCw, DollarSign } from "lucide-react";
 import { motion } from "motion/react";
 import { db } from "../lib/firebase";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
@@ -34,12 +34,18 @@ export default function AdminConsole() {
   const [globalAnnouncement, setGlobalAnnouncement] = useState("");
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [marketPulse, setMarketPulse] = useState<any>(null);
+  const [commissions, setCommissions] = useState<any>(null);
 
   useEffect(() => {
     fetch("/api/gemini/sentiment")
       .then(res => res.json())
       .then(data => setMarketPulse(data))
       .catch(() => setMarketPulse({ score: 65, label: "Bullish Neutral", reason: "Market technicals remain strong despite macro uncertainty." }));
+
+    fetch("/api/admin/commission-report")
+      .then(res => res.json())
+      .then(data => setCommissions(data))
+      .catch(err => console.error("Commission fetch error:", err));
   }, []);
 
   const handleBroadcast = async () => {
@@ -290,6 +296,70 @@ export default function AdminConsole() {
           <button className="mt-6 w-full py-3 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 text-[10px] font-mono uppercase tracking-widest rounded-xl transition-colors border border-neutral-700">
             Export Logs (CSV)
           </button>
+        </div>
+      </div>
+
+      {/* Commission Reports Section */}
+      <div className="bg-neutral-900 border border-neutral-800 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-8 opacity-5 text-amber-500">
+          <DollarSign size={120} />
+        </div>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+          <div>
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <BarChart3 size={20} className="text-amber-400" />
+              Sera Elite Commission Intel
+            </h2>
+            <p className="text-xs text-neutral-500 mt-1 uppercase font-mono tracking-widest">Leadership Overrides & Platform Economics</p>
+          </div>
+          <div className="flex gap-3">
+             <div className="px-4 py-2 bg-neutral-950 border border-neutral-800 rounded-xl">
+               <p className="text-[9px] text-neutral-500 uppercase tracking-widest mb-0.5">Total Payouts</p>
+               <p className="text-sm font-bold text-amber-400 font-mono">${commissions?.totalCommissions?.toLocaleString()}</p>
+             </div>
+             <div className="px-4 py-2 bg-neutral-950 border border-neutral-800 rounded-xl">
+               <p className="text-[9px] text-neutral-500 uppercase tracking-widest mb-0.5">Growth</p>
+               <p className="text-sm font-bold text-emerald-400 font-mono">+{commissions?.projections?.growth}</p>
+             </div>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead>
+              <tr className="border-b border-neutral-800 bg-neutral-950/50 text-neutral-500 uppercase font-mono tracking-tighter">
+                <th className="px-6 py-4">Elite Leader</th>
+                <th className="px-6 py-4">Managed Organization</th>
+                <th className="px-6 py-4">Leadership Commission</th>
+                <th className="px-6 py-4">Payment Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-800/50">
+              {commissions?.breakdown?.map((item: any, i: number) => (
+                <tr key={i} className="hover:bg-neutral-800/20 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-neutral-800 border border-neutral-700 flex items-center justify-center text-neutral-400 font-bold text-[10px]">
+                        {item.leader.charAt(0)}
+                      </div>
+                      <span className="font-bold text-white">{item.leader}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-neutral-400 font-mono">{item.teamSize} High-Volume Traders</td>
+                  <td className="px-6 py-4 text-amber-400 font-bold font-mono">${item.commission.toLocaleString()}</td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                      item.status === "Paid" ? "bg-emerald-500/10 text-emerald-400" : 
+                      item.status === "Processing" ? "bg-cyan-500/10 text-cyan-400" : 
+                      "bg-amber-500/10 text-amber-400"
+                    }`}>
+                      {item.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
