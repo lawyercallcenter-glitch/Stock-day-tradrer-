@@ -90,7 +90,7 @@ export default function PortfolioManager() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Briefcase className="text-emerald-400" size={24} />
-          <h2 className="text-2xl font-bold text-white tracking-tight">Portfolio Engine</h2>
+          <h2 className="text-2xl font-bold text-white tracking-tight">Portfolio AI Managed</h2>
         </div>
         <button
           onClick={() => setIsAdding(true)}

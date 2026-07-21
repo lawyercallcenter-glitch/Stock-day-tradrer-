@@ -9,35 +9,21 @@ export const auth = getAuth(app);
 
 // Configure Google OAuth provider with requested Google Workspace scopes
 export const provider = new GoogleAuthProvider();
-provider.addScope("https://www.googleapis.com/auth/drive");
-provider.addScope("https://www.googleapis.com/auth/drive.file");
+// Required for Workspace components (Hub, Meet, Chat, Classroom, Keep, Contacts)
 provider.addScope("https://www.googleapis.com/auth/drive.readonly");
-provider.addScope("https://www.googleapis.com/auth/spreadsheets");
-provider.addScope("https://www.googleapis.com/auth/spreadsheets.readonly");
+provider.addScope("https://www.googleapis.com/auth/drive.file");
 provider.addScope("https://www.googleapis.com/auth/calendar.events");
-provider.addScope("https://mail.google.com/");
-provider.addScope("https://www.googleapis.com/auth/gmail.addons.current.action.compose");
-provider.addScope("https://www.googleapis.com/auth/gmail.addons.current.message.action");
-provider.addScope("https://www.googleapis.com/auth/gmail.addons.current.message.metadata");
-provider.addScope("https://www.googleapis.com/auth/gmail.addons.current.message.readonly");
-provider.addScope("https://www.googleapis.com/auth/gmail.compose");
-provider.addScope("https://www.googleapis.com/auth/gmail.insert");
-provider.addScope("https://www.googleapis.com/auth/gmail.labels");
-provider.addScope("https://www.googleapis.com/auth/gmail.metadata");
-provider.addScope("https://www.googleapis.com/auth/gmail.modify");
-provider.addScope("https://www.googleapis.com/auth/gmail.readonly");
 provider.addScope("https://www.googleapis.com/auth/gmail.send");
-provider.addScope("https://www.googleapis.com/auth/gmail.settings.basic");
-provider.addScope("https://www.googleapis.com/auth/gmail.settings.sharing");
-provider.addScope("https://www.googleapis.com/auth/forms.body");
-provider.addScope("https://www.googleapis.com/auth/forms.body.readonly");
 provider.addScope("https://www.googleapis.com/auth/forms.responses.readonly");
 provider.addScope("https://www.googleapis.com/auth/meetings.space.created");
 provider.addScope("https://www.googleapis.com/auth/meetings.space.readonly");
-provider.addScope("https://www.googleapis.com/auth/meetings.space.settings");
 provider.addScope("https://www.googleapis.com/auth/chat.messages.create");
 provider.addScope("https://www.googleapis.com/auth/chat.spaces.readonly");
+provider.addScope("https://www.googleapis.com/auth/chat.spaces.create");
 provider.addScope("https://www.googleapis.com/auth/contacts.readonly");
+provider.addScope("https://www.googleapis.com/auth/classroom.courses.readonly");
+provider.addScope("https://www.googleapis.com/auth/classroom.announcements");
+provider.addScope("https://www.googleapis.com/auth/presentations");
 
 let isSigningIn = false;
 let cachedAccessToken: string | null = null;

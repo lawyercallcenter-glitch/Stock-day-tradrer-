@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "motion/react";
 import { StockHistoricalData } from "../types";
-import { TrendingUp, TrendingDown, DollarSign, Settings, Sliders, Layers } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Settings, Sliders, Layers, ChevronDown } from "lucide-react";
 import { calculateSMA, calculateEMA, calculateRSI, calculateMACD } from "../lib/indicators";
 
 const TICKER_NAMES: Record<string, string> = {
@@ -281,84 +281,100 @@ export default function StockChart({ symbol, data, loading, viewMode, atr, beta 
         </div>
       </div>
 
-      {/* Control Buttons for Technical Analysis */}
+      {/* Control Dropdowns for Technical Analysis */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-neutral-800/60 text-xs">
-        <div className="flex flex-wrap items-center gap-1.5">
-          {/* Chart type toggle */}
-          <button
-            onClick={() => setChartType("line")}
-            className={`px-2.5 py-1 rounded-lg font-mono font-bold border transition-all ${chartType === "line" ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" : "bg-neutral-950/40 border-neutral-800/40 text-neutral-400 hover:text-white"}`}
-          >
-            LINE
-          </button>
-          <button
-            onClick={() => setChartType("area")}
-            className={`px-2.5 py-1 rounded-lg font-mono font-bold border transition-all ${chartType === "area" ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" : "bg-neutral-950/40 border-neutral-800/40 text-neutral-400 hover:text-white"}`}
-          >
-            AREA
-          </button>
-          <button
-            onClick={() => setChartType("candlestick")}
-            className={`px-2.5 py-1 rounded-lg font-mono font-bold border transition-all ${chartType === "candlestick" ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" : "bg-neutral-950/40 border-neutral-800/40 text-neutral-400 hover:text-white"}`}
-          >
-            CANDLES
-          </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Chart Type Dropdown */}
+          <div className="relative group">
+            <select
+              value={chartType}
+              onChange={(e) => setChartType(e.target.value as any)}
+              className="bg-neutral-950 border border-neutral-800 text-neutral-300 font-mono font-bold py-1.5 pl-3 pr-8 rounded-xl appearance-none cursor-pointer focus:border-emerald-500/50 outline-none"
+            >
+              <option value="line">LINE CHART</option>
+              <option value="area">AREA CHART</option>
+              <option value="candlestick">CANDLESTICKS</option>
+            </select>
+            <div className="absolute right-2.5 top-2.5 pointer-events-none text-neutral-600">
+              <ChevronDown size={14} />
+            </div>
+          </div>
 
           <div className="h-4 w-[1px] bg-neutral-800 mx-1"></div>
 
-          {/* Overlays toggles */}
-          <button
-            onClick={() => setShowSMA20(!showSMA20)}
-            className={`px-2.5 py-1 rounded-lg font-mono text-[11px] border transition-all flex items-center gap-1 ${showSMA20 ? "bg-indigo-500/10 border-indigo-500/30 text-indigo-300 font-bold" : "bg-neutral-950/40 border-neutral-800/40 text-neutral-500 hover:text-white"}`}
-          >
-            SMA ({smaPeriod})
-          </button>
-          <button
-            onClick={() => setShowSMA50(!showSMA50)}
-            className={`px-2.5 py-1 rounded-lg font-mono text-[11px] border transition-all flex items-center gap-1 ${showSMA50 ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-300 font-bold" : "bg-neutral-950/40 border-neutral-800/40 text-neutral-500 hover:text-white"}`}
-          >
-            SMA (50)
-          </button>
-          <button
-            onClick={() => setShowEMA9(!showEMA9)}
-            className={`px-2.5 py-1 rounded-lg font-mono text-[11px] border transition-all flex items-center gap-1 ${showEMA9 ? "bg-amber-500/10 border-amber-500/30 text-amber-300 font-bold" : "bg-neutral-950/40 border-neutral-800/40 text-neutral-500 hover:text-white"}`}
-          >
-            EMA ({emaPeriod})
-          </button>
-          <button
-            onClick={() => setShowEMA21(!showEMA21)}
-            className={`px-2.5 py-1 rounded-lg font-mono text-[11px] border transition-all flex items-center gap-1 ${showEMA21 ? "bg-purple-500/10 border-purple-500/30 text-purple-300 font-bold" : "bg-neutral-950/40 border-neutral-800/40 text-neutral-500 hover:text-white"}`}
-          >
-            EMA (21)
-          </button>
+          {/* Indicator Overlays Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className={`flex items-center gap-2 bg-neutral-950 border border-neutral-800 px-3 py-1.5 rounded-xl font-mono text-[11px] transition-all hover:border-neutral-700 ${showSMA20 || showSMA50 || showEMA9 || showEMA21 ? "text-emerald-400 font-bold" : "text-neutral-400"}`}
+            >
+              <Layers size={14} /> OVERLAYS AI
+              <ChevronDown size={14} />
+            </button>
+            
+            {showSettings && (
+              <div className="absolute top-full left-0 mt-2 z-20 w-48 bg-neutral-900 border border-neutral-800 rounded-2xl p-2 shadow-2xl">
+                <div className="space-y-1">
+                  {[
+                    { label: `SMA (${smaPeriod})`, active: showSMA20, toggle: () => setShowSMA20(!showSMA20), color: "text-indigo-400" },
+                    { label: "SMA (50)", active: showSMA50, toggle: () => setShowSMA50(!showSMA50), color: "text-cyan-400" },
+                    { label: `EMA (${emaPeriod})`, active: showEMA9, toggle: () => setShowEMA9(!showEMA9), color: "text-amber-400" },
+                    { label: "EMA (21)", active: showEMA21, toggle: () => setShowEMA21(!showEMA21), color: "text-purple-400" },
+                  ].map((ind, i) => (
+                    <button
+                      key={i}
+                      onClick={ind.toggle}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-mono transition-all ${ind.active ? "bg-neutral-800 " + ind.color : "text-neutral-500 hover:bg-neutral-800 hover:text-neutral-300"}`}
+                    >
+                      {ind.label}
+                      <div className={`h-2 w-2 rounded-full ${ind.active ? "bg-current" : "bg-neutral-800"}`} />
+                    </button>
+                  ))}
+                  
+                  <div className="border-t border-neutral-800 my-2 pt-2 px-2">
+                    <p className="text-[9px] font-mono text-neutral-600 uppercase mb-2">Configure Periods</p>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        value={smaPeriod}
+                        onChange={(e) => setSmaPeriod(Math.max(2, Math.min(100, parseInt(e.target.value) || 20)))}
+                        className="bg-neutral-950 border border-neutral-800 rounded-lg px-2 py-1 text-white w-full text-[10px]"
+                        placeholder="SMA"
+                      />
+                      <input
+                        type="number"
+                        value={emaPeriod}
+                        onChange={(e) => setEmaPeriod(Math.max(2, Math.min(100, parseInt(e.target.value) || 9)))}
+                        className="bg-neutral-950 border border-neutral-800 rounded-lg px-2 py-1 text-white w-full text-[10px]"
+                        placeholder="EMA"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Indicators Panels & Settings */}
+        {/* Indicators Panels */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowRSI(!showRSI)}
-            className={`px-2.5 py-1 rounded-lg font-mono text-[11px] border transition-all ${showRSI ? "bg-neutral-800 border-neutral-700 text-neutral-200" : "bg-neutral-950/40 border-neutral-800/40 text-neutral-500"}`}
+            className={`px-3 py-1.5 rounded-xl font-mono text-[11px] border transition-all ${showRSI ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold" : "bg-neutral-950/40 border-neutral-800/40 text-neutral-500"}`}
           >
             RSI
           </button>
           <button
             onClick={() => setShowMACD(!showMACD)}
-            className={`px-2.5 py-1 rounded-lg font-mono text-[11px] border transition-all ${showMACD ? "bg-neutral-800 border-neutral-700 text-neutral-200" : "bg-neutral-950/40 border-neutral-800/40 text-neutral-500"}`}
+            className={`px-3 py-1.5 rounded-xl font-mono text-[11px] border transition-all ${showMACD ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold" : "bg-neutral-950/40 border-neutral-800/40 text-neutral-500"}`}
           >
             MACD
           </button>
           <button
             onClick={() => setShowVolume(!showVolume)}
-            className={`px-2.5 py-1 rounded-lg font-mono text-[11px] border transition-all ${showVolume ? "bg-neutral-800 border-neutral-700 text-neutral-200" : "bg-neutral-950/40 border-neutral-800/40 text-neutral-500"}`}
+            className={`px-3 py-1.5 rounded-xl font-mono text-[11px] border transition-all ${showVolume ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold" : "bg-neutral-950/40 border-neutral-800/40 text-neutral-500"}`}
           >
             VOL
-          </button>
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className={`p-1.5 rounded-lg border transition-all ${showSettings ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" : "bg-neutral-950/40 border-neutral-800/40 text-neutral-500 hover:text-white"}`}
-            title="Configure Indicator Periods"
-          >
-            <Sliders size={14} />
           </button>
         </div>
       </div>

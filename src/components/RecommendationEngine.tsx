@@ -45,10 +45,16 @@ export default function RecommendationEngine({ onSelectTicker, onProposeTicker, 
     try {
       const res = await fetch("/api/gemini/recommendations");
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || "Failed to fetch day trading recommendations.");
+        let errorMsg = "Failed to fetch day trading recommendations.";
+        try {
+          const errData = await res.json();
+          errorMsg = errData.error || errorMsg;
+        } catch (e) {}
+        throw new Error(errorMsg);
       }
-      const data = await res.json();
+      const text = await res.text();
+      if (!text) throw new Error("Empty response from recommendation engine.");
+      const data = JSON.parse(text);
       setRecommendations(data.recommendations || []);
       setSources(data.sources || []);
       setIsFallback(!!data.fallback);
@@ -124,7 +130,7 @@ News Catalyst: ${rec.news}`,
           <div>
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <h3 className="font-bold text-lg text-white font-sans tracking-tight">Sera's Day Trading Stock Scanner & Recommendation Engine</h3>
+              <h3 className="font-bold text-lg text-white font-sans tracking-tight">Recommendations AI Scanner Engine</h3>
             </div>
             <p className="text-xs text-neutral-400 leading-relaxed mt-1 max-w-2xl">
               Analyzing structural relative trading volume, historical standard deviations, real-time news catalysts, and multi-timeframe moving averages to pinpoint top intra-day setups.
@@ -265,7 +271,7 @@ News Catalyst: ${rec.news}`,
                     {/* Sera's Tactical Rationale */}
                     <div className="border-l-2 border-emerald-500/40 pl-3.5 py-1.5 my-3 bg-emerald-500/[0.01]">
                       <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold uppercase tracking-widest mb-1 font-mono">
-                        <Sparkles size={11} /> Sera's Trading Rationale
+                        <Sparkles size={11} /> Sera's AI Trading Rationale
                       </div>
                       <p className="text-xs text-neutral-300 italic font-sans leading-relaxed">
                         "{rec.rationale}"

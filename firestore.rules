@@ -37,6 +37,13 @@ service cloud.firestore {
              data.portfolioId is string && data.portfolioId.size() <= 128 &&
              data.symbol is string && data.symbol.size() <= 10;
     }
+    function isValidRecommendation(data) {
+      return data.keys().hasAll(['id', 'ticker', 'contactResourceName', 'sharedAt', 'message']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.ticker is string && data.ticker.size() <= 10 &&
+             data.contactResourceName is string && data.contactResourceName.size() <= 256 &&
+             data.message is string && data.message.size() <= 1024;
+    }
 
     // Routes
     match /users/{userId} {
@@ -70,6 +77,11 @@ service cloud.firestore {
       match /logs/{logId} {
         allow read: if isOwner(userId);
         allow write: if isOwner(userId);
+      }
+      match /recommendations/{recommendationId} {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidRecommendation(request.resource.data);
+        allow delete: if isOwner(userId);
       }
     }
   }

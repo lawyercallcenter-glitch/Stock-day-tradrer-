@@ -312,7 +312,7 @@ Rationale: ${setup.explanation}`,
             <div className="flex items-center justify-between mb-4 pb-4 border-b border-neutral-800/40">
               <h4 className="font-bold text-lg text-white font-sans flex items-center gap-2">
                 <Compass className="text-emerald-400" size={20} />
-                Sera's Custom Ticker Analyst
+                Analyst AI Custom Terminal
               </h4>
               <span className="font-mono text-neutral-500 text-xs">MODEL: FLASH 3.5</span>
             </div>
@@ -509,7 +509,7 @@ Rationale: ${setup.explanation}`,
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-neutral-800/40">
               <h4 className="font-bold text-lg text-white font-sans flex items-center gap-2">
                 <Compass className="text-emerald-400" size={20} />
-                Sera's Daily Tactical Breakout Scanner
+                Scanner AI Tactical Breakouts
               </h4>
               <button
                 onClick={fetchDailyScan}
@@ -638,7 +638,7 @@ Rationale: ${setup.explanation}`,
         <div className="flex items-center justify-between mb-6 pb-4 border-b border-neutral-800/40">
           <h4 className="font-bold text-lg text-white font-sans flex items-center gap-2">
             <Cpu className="text-indigo-400" size={20} />
-            Sera's Autonomous Orchestrator
+            Orchestrator AI Autonomous
           </h4>
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse" />
@@ -729,7 +729,7 @@ Rationale: ${setup.explanation}`,
         <div className="flex items-center justify-between mb-6 pb-4 border-b border-neutral-800/40">
           <h4 className="font-bold text-lg text-white font-sans flex items-center gap-2">
             <Calculator className="text-emerald-400" size={20} />
-            Dual-Bag Math & Compounding Simulator
+            Calculator AI Compounding Simulator
           </h4>
           <span className="font-mono text-neutral-500 text-xs">NO ASSUMPTIONS, PURE DATA</span>
         </div>

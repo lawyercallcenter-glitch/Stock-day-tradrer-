@@ -9,6 +9,7 @@ export default function JournalManager() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
   
   // New Entry State
   const [title, setTitle] = useState("");
@@ -45,7 +46,6 @@ export default function JournalManager() {
     try {
       const symbolArray = symbols.split(",").map(s => s.trim().toUpperCase()).filter(s => s);
       await addDoc(collection(db, "users", user.uid, "journal"), {
-        id: Math.random().toString(36).substring(2, 15),
         title,
         content,
         symbols: symbolArray,
@@ -64,10 +64,55 @@ export default function JournalManager() {
     }
   };
 
+  const generateAIEntry = async () => {
+    if (!user) return;
+    setIsGenerating(true);
+    try {
+      const response = await fetch("/api/journal/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          symbols,
+          sentiment,
+          prompt: content || "Post-market review of active session"
+        })
+      });
+      
+      if (!response.ok) {
+        let errorMsg = "Generation failed";
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.error || errorMsg;
+        } catch (e) {}
+        throw new Error(errorMsg);
+      }
+      
+      const text = await response.text();
+      if (!text) throw new Error("Sera was unable to generate a draft. Empty response.");
+      const data = JSON.parse(text);
+      
+      setTitle(data.title || title);
+      setContent(data.content || content);
+      setSentiment(data.sentiment || sentiment);
+    } catch (err: any) {
+      console.error("AI Generation error:", err);
+      alert("Sera AI Assistant Error: " + err.message);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const autoApproveDraft = async () => {
+    if (!title || !content) {
+      await generateAIEntry();
+    }
+    // The user requested: "SI AGENT SHOULD DO THE JOURNAL ENTRIES I WILL JUST RAD AND APPROBE THEM"
+  };
+
   const handleDeleteEntry = async (id: string) => {
     if (!user || !window.confirm("Delete this entry?")) return;
     try {
-      // Need to find doc ID
+      await deleteDoc(doc(db, "users", user.uid, "journal", id));
     } catch (err) {
       console.error("Error deleting entry:", err);
     }
@@ -78,7 +123,7 @@ export default function JournalManager() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <BookOpen className="text-amber-400" size={24} />
-          <h2 className="text-2xl font-bold text-white tracking-tight">Trade Journal</h2>
+          <h2 className="text-2xl font-bold text-white tracking-tight">Journal AI Analyzed</h2>
         </div>
         <button
           onClick={() => setIsAdding(!isAdding)}
@@ -121,12 +166,22 @@ export default function JournalManager() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest">Psychology & Market Narrative</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest">Psychology & Market Narrative</label>
+                  <button
+                    onClick={generateAIEntry}
+                    disabled={isGenerating}
+                    className="flex items-center gap-1.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider hover:text-amber-300 transition-colors disabled:opacity-50"
+                  >
+                    <Sparkles size={12} className={isGenerating ? "animate-pulse" : ""} />
+                    {isGenerating ? "Sera is drafting..." : "Draft with Sera Intel"}
+                  </button>
+                </div>
                 <textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  placeholder="Describe your trade execution, mental state, or market observations..."
-                  rows={4}
+                  placeholder="Describe your trade execution, mental state, or market observations... (Or click 'Draft with Sera Intel' for an AI proposal)"
+                  rows={6}
                   className="w-full bg-neutral-950 border border-neutral-850 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-amber-500/50 resize-none"
                 />
               </div>
@@ -213,7 +268,10 @@ export default function JournalManager() {
                 <button className="flex items-center gap-1.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider hover:text-amber-300 transition-colors">
                   <Sparkles size={12} /> Sera Intel
                 </button>
-                <button className="text-neutral-600 hover:text-rose-400 transition-colors">
+                <button 
+                  onClick={() => handleDeleteEntry(entry.id)}
+                  className="text-neutral-600 hover:text-rose-400 transition-colors"
+                >
                   <Trash2 size={14} />
                 </button>
               </div>

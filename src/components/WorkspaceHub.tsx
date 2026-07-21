@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Mail, Video, FileText, Send, CheckCircle2, ChevronRight, MessageSquare, Presentation } from "lucide-react";
+import { googleSignIn } from "../lib/firebase";
 import { sendEmail, createMeetSpace, getFormResponses, listGoogleForms, createChatSpace, sendChatMessage, createPresentation } from "../lib/workspace";
+import { motion, AnimatePresence } from "motion/react";
 
 export default function WorkspaceHub({ accessToken }: { accessToken: string | null }) {
   const [emailTo, setEmailTo] = useState("");
@@ -138,10 +140,25 @@ export default function WorkspaceHub({ accessToken }: { accessToken: string | nu
 
   if (!accessToken) {
     return (
-      <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-8 text-center mt-6">
-        <h3 className="text-xl font-bold text-white mb-2 font-sans tracking-tight">Workspace Hub</h3>
-        <p className="text-sm text-neutral-400 mb-6 font-mono">Sign in with Google and grant Workspace permissions to access this feature.</p>
-      </div>
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-neutral-900 border border-neutral-800 rounded-3xl p-16 text-center mt-6 max-w-2xl mx-auto"
+      >
+        <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Mail className="text-emerald-400" size={40} />
+        </div>
+        <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">Workspace AI Orchestrated</h3>
+        <p className="text-sm text-neutral-400 mb-8 max-w-sm mx-auto leading-relaxed">
+          Unlock professional trading tools by connecting your Google Workspace. Sync Gmail, Meet, Chat, and Drive for a unified workflow.
+        </p>
+        <button
+          onClick={() => googleSignIn()}
+          className="bg-emerald-500 hover:bg-emerald-400 text-neutral-950 px-8 py-4 rounded-2xl font-bold text-sm transition-all shadow-xl shadow-emerald-500/20 flex items-center gap-3 mx-auto"
+        >
+          Connect Google Workspace
+        </button>
+      </motion.div>
     );
   }
 
@@ -151,7 +168,7 @@ export default function WorkspaceHub({ accessToken }: { accessToken: string | nu
       <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
         <div className="flex items-center gap-2 mb-4 pb-4 border-b border-neutral-800/50">
           <Mail className="text-emerald-400" size={18} />
-          <h3 className="font-sans font-bold text-white tracking-wider uppercase text-sm">Client Outreach (Gmail)</h3>
+          <h3 className="font-sans font-bold text-white tracking-wider uppercase text-sm">Client Outreach AI Drafted (Gmail)</h3>
         </div>
         
         <form onSubmit={handleSendEmail} className="space-y-3">
@@ -195,7 +212,7 @@ export default function WorkspaceHub({ accessToken }: { accessToken: string | nu
         <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
           <div className="flex items-center gap-2 mb-4 pb-4 border-b border-neutral-800/50">
             <Video className="text-emerald-400" size={18} />
-            <h3 className="font-sans font-bold text-white tracking-wider uppercase text-sm">Strategy Meetings</h3>
+            <h3 className="font-sans font-bold text-white tracking-wider uppercase text-sm">Meet AI Guided</h3>
           </div>
           <p className="text-xs text-neutral-400 mb-4 font-mono leading-relaxed">Instantly generate a Google Meet link for a 1-on-1 strategy sync.</p>
           <button
@@ -219,7 +236,7 @@ export default function WorkspaceHub({ accessToken }: { accessToken: string | nu
         <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
           <div className="flex items-center gap-2 mb-4 pb-4 border-b border-neutral-800/50">
             <MessageSquare className="text-emerald-400" size={18} />
-            <h3 className="font-sans font-bold text-white tracking-wider uppercase text-sm">Team Chat</h3>
+            <h3 className="font-sans font-bold text-white tracking-wider uppercase text-sm">Chat AI Assisted</h3>
           </div>
           {!createdChatSpace ? (
             <div className="space-y-3">
@@ -243,7 +260,7 @@ export default function WorkspaceHub({ accessToken }: { accessToken: string | nu
         <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
           <div className="flex items-center gap-2 mb-4 pb-4 border-b border-neutral-800/50">
             <Presentation className="text-emerald-400" size={18} />
-            <h3 className="font-sans font-bold text-white tracking-wider uppercase text-sm">Presentations</h3>
+            <h3 className="font-sans font-bold text-white tracking-wider uppercase text-sm">Slides AI Crafted</h3>
           </div>
           {!createdPresentation ? (
             <div className="space-y-3">
@@ -264,7 +281,7 @@ export default function WorkspaceHub({ accessToken }: { accessToken: string | nu
         <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 flex flex-col">
           <div className="flex items-center gap-2 mb-4 pb-4 border-b border-neutral-800/50">
             <FileText className="text-emerald-400" size={18} />
-            <h3 className="font-sans font-bold text-white tracking-wider uppercase text-sm">Client Intake (Forms)</h3>
+            <h3 className="font-sans font-bold text-white tracking-wider uppercase text-sm">Client Intake AI Parsed (Forms)</h3>
           </div>
           
           {loadingForms ? (

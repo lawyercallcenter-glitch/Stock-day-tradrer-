@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { StockMetric, StockHistoricalData, TradeLog, StockBagItem } from "./types";
 import StockChart from "./components/StockChart";
 import StockFundamentals from "./components/StockFundamentals";
@@ -19,9 +20,12 @@ import MarketSentimentGauge from "./components/MarketSentimentGauge";
 import GoogleMeetIntegration from "./components/GoogleMeetIntegration";
 import ContactsIntegration from "./components/ContactsIntegration";
 import GoogleChatIntegration from "./components/GoogleChatIntegration";
+import GoogleClassroomIntegration from "./components/GoogleClassroomIntegration";
+import GoogleKeepIntegration from "./components/GoogleKeepIntegration";
+import GoogleSlidesIntegration from "./components/GoogleSlidesIntegration";
 import MarketingHub from "./components/MarketingHub";
 import EducationCenter from "./components/EducationCenter";
-import { LineChart, Briefcase, Activity, Sparkles, TrendingUp, Compass, Cpu, Bell, Star, Shield, LogIn, LogOut, Check, X, FileSearch, ExternalLink, HelpCircle, Zap, CreditCard, Megaphone, GraduationCap, BookOpen, Video, Users, Share2, MessageSquare } from "lucide-react";
+import { LineChart, Briefcase, Activity, Sparkles, TrendingUp, Compass, Cpu, Bell, Star, Shield, LogIn, LogOut, Check, X, FileSearch, ExternalLink, HelpCircle, Zap, CreditCard, Megaphone, GraduationCap, BookOpen, Video, Users, Share2, MessageSquare, School, StickyNote, Presentation, ChevronDown } from "lucide-react";
 import { initAuth, googleSignIn, googleSignOut, db, handleFirestoreError, OperationType } from "./lib/firebase";
 import { collection, doc, setDoc, deleteDoc, getDocs } from "firebase/firestore";
 import { loadGooglePickerScript, showGooglePicker, fetchContacts } from "./lib/workspace";
@@ -82,9 +86,33 @@ export default function App() {
   const [loadingData, setLoadingData] = useState(false);
   const [chartViewMode, setChartViewMode] = useState<"day_trade" | "long_term">("day_trade");
   const [theme, setTheme] = useState<"midnight" | "daylight">("midnight");
-  const [selectedTab, setSelectedTab] = useState<"visualizer" | "bags" | "ai_console" | "gemini_chat" | "recommendations" | "pricing" | "marketing" | "progress" | "workspace" | "google_meet" | "contacts" | "google_chat" | "journal" | "portfolios" | "watchlists" | "education">("visualizer");
+  const [selectedTab, setSelectedTab] = useState<"visualizer" | "bags" | "ai_console" | "gemini_chat" | "recommendations" | "pricing" | "marketing" | "progress" | "workspace" | "google_meet" | "contacts" | "google_chat" | "journal" | "portfolios" | "watchlists" | "education" | "classroom" | "keep" | "slides">("visualizer");
   const [pendingTickerSelection, setPendingTickerSelection] = useState<string | null>(null);
   const [tradeModalTicker, setTradeModalTicker] = useState<string | null>(null);
+  const [isNavOpen, setIsNavOpen] = useState(false);
+
+  const tabs = [
+    { id: "visualizer", label: "Screen AI Analyzed", icon: <LineChart size={14} />, color: "text-emerald-400" },
+    { id: "portfolios", label: "Portfolio AI Managed", icon: <Briefcase size={14} />, color: "text-emerald-400" },
+    { id: "watchlists", label: "Watchlists AI Screened", icon: <Star size={14} />, color: "text-emerald-400" },
+    { id: "journal", label: "Journal AI Analyzed", icon: <BookOpen size={14} />, color: "text-emerald-400" },
+    { id: "ai_console", label: "AI Analyst Console", icon: <Compass size={14} />, color: "text-emerald-400" },
+    { id: "gemini_chat", label: "Sera AI Intel", icon: <Sparkles size={14} />, color: "text-emerald-400" },
+    { id: "recommendations", label: "AI Trade Recs", icon: <Zap size={14} />, color: "text-emerald-400" },
+    { id: "google_meet", label: "Meet AI Guided", icon: <Video size={14} />, color: "text-emerald-400" },
+    { id: "contacts", label: "CRM AI Managed", icon: <Users size={14} />, color: "text-emerald-400" },
+    { id: "google_chat", label: "Chat AI Assisted", icon: <MessageSquare size={14} />, color: "text-indigo-400" },
+    { id: "marketing", label: "Ad Center AI Created", icon: <Share2 size={14} />, color: "text-indigo-400" },
+    { id: "education", label: "Academy AI Guided", icon: <GraduationCap size={14} />, color: "text-rose-400" },
+    { id: "classroom", label: "Classroom AI Guided", icon: <School size={14} />, color: "text-rose-400" },
+    { id: "keep", label: "Keep AI Organized", icon: <StickyNote size={14} />, color: "text-yellow-400" },
+    { id: "slides", label: "Slides AI Crafted", icon: <Presentation size={14} />, color: "text-orange-400" },
+    { id: "pricing", label: "Pricing AI Optimized", icon: <CreditCard size={14} />, color: "text-emerald-400" },
+    { id: "progress", label: "Strategy AI Built", icon: <GraduationCap size={14} />, color: "text-emerald-400" },
+    { id: "workspace", label: "Workspace AI Orchestrated", icon: <Briefcase size={14} />, color: "text-emerald-400" },
+  ];
+
+  const activeTab = tabs.find(t => t.id === selectedTab) || tabs[0];
 
   const approveTickerSelection = () => {
     if (pendingTickerSelection) {
@@ -639,105 +667,61 @@ export default function App() {
               {theme === "midnight" ? "☀️" : "🌙"}
             </button>
 
-            {/* Sub Navigation Tabs */}
-            <div className="flex bg-neutral-900 border border-neutral-850 p-1 rounded-xl">
+            {/* Navigation Dropdown */}
+            <div className="relative">
               <button
-                onClick={() => setSelectedTab("visualizer")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "visualizer" ? "bg-neutral-850 text-emerald-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
+                onClick={() => setIsNavOpen(!isNavOpen)}
+                className="flex items-center gap-3 bg-neutral-900 border border-neutral-850 px-4 py-2 rounded-xl text-white font-bold transition-all hover:border-neutral-700 shadow-xl"
               >
-                <LineChart size={13} /> Screen
+                <span className={activeTab.color}>{activeTab.icon}</span>
+                <span className="text-sm tracking-tight">{activeTab.label}</span>
+                <ChevronDown size={14} className={`text-neutral-500 transition-transform ${isNavOpen ? "rotate-180" : ""}`} />
               </button>
-              <button
-                onClick={() => setSelectedTab("portfolios")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "portfolios" ? "bg-neutral-850 text-emerald-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
-              >
-                <Briefcase size={13} /> Portfolios
-              </button>
-              <button
-                onClick={() => setSelectedTab("watchlists")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "watchlists" ? "bg-neutral-850 text-emerald-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
-              >
-                <Star size={13} /> Watchlists
-              </button>
-              <button
-                onClick={() => setSelectedTab("journal")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "journal" ? "bg-neutral-850 text-emerald-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
-              >
-                <BookOpen size={13} /> Journal
-              </button>
-              <button
-                onClick={() => setSelectedTab("ai_console")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "ai_console" ? "bg-neutral-850 text-emerald-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
-              >
-                <Compass size={13} /> AI Analyst
-              </button>
-              <button
-                onClick={() => setSelectedTab("gemini_chat")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "gemini_chat" ? "bg-neutral-850 text-emerald-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
-              >
-                <Sparkles size={13} /> Gemini AI
-              </button>
-              <button
-                onClick={() => setSelectedTab("recommendations")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "recommendations" ? "bg-neutral-850 text-emerald-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
-              >
-                <Zap size={13} /> Day Trade Recs
-              </button>
-              <button
-                onClick={() => setSelectedTab("google_meet")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "google_meet" ? "bg-neutral-850 text-emerald-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
-              >
-                <Video size={13} /> Meet
-              </button>
-              <button
-                onClick={() => setSelectedTab("contacts")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "contacts" ? "bg-neutral-850 text-emerald-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
-              >
-                <Users size={13} /> Contacts
-              </button>
-              <button
-                onClick={() => setSelectedTab("google_chat")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "google_chat" ? "bg-neutral-850 text-indigo-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
-              >
-                <MessageSquare size={13} /> Chat
-              </button>
-              <button
-                onClick={() => setSelectedTab("marketing")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "marketing" ? "bg-neutral-850 text-indigo-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
-              >
-                <Share2 size={13} /> Ad Center
-              </button>
-              <button
-                onClick={() => setSelectedTab("education")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "education" ? "bg-neutral-850 text-rose-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
-              >
-                <GraduationCap size={13} /> Academy
-              </button>
-              <button
-                onClick={() => setSelectedTab("pricing")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "pricing" ? "bg-neutral-850 text-emerald-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
-              >
-                <CreditCard size={13} /> Pricing & Plans
-              </button>
-              <button
-                onClick={() => setSelectedTab("progress")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "progress" ? "bg-neutral-850 text-emerald-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
-              >
-                <GraduationCap size={13} /> Savings Strategy
-              </button>
-              <button
-                onClick={() => setSelectedTab("marketing")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "marketing" ? "bg-neutral-850 text-emerald-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
-              >
-                <Megaphone size={13} /> Doxiql Growth
-              </button>
-              <button
-                onClick={() => setSelectedTab("workspace")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${selectedTab === "workspace" ? "bg-neutral-850 text-emerald-400 font-bold border border-neutral-800" : "text-neutral-400 hover:text-neutral-200"}`}
-              >
-                <Briefcase size={13} /> Workspace
-              </button>
+
+              <AnimatePresence>
+                {isNavOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setIsNavOpen(false)} 
+                    />
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute right-0 top-full mt-2 w-64 bg-neutral-900 border border-neutral-800 rounded-2xl p-2 shadow-2xl z-50 overflow-hidden"
+                    >
+                      <div className="max-h-[70vh] overflow-y-auto custom-scrollbar">
+                        <p className="text-[10px] font-mono text-neutral-600 uppercase tracking-widest px-3 py-2">Select Command Center</p>
+                        <div className="grid grid-cols-1 gap-1">
+                          {tabs.map((tab) => (
+                            <button
+                              key={tab.id}
+                              onClick={() => {
+                                setSelectedTab(tab.id as any);
+                                setIsNavOpen(false);
+                              }}
+                              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                                selectedTab === tab.id 
+                                  ? "bg-neutral-850 text-white border border-neutral-800" 
+                                  : "text-neutral-400 hover:bg-neutral-850 hover:text-neutral-200"
+                              }`}
+                            >
+                              <span className={tab.color}>{tab.icon}</span>
+                              <span className="text-sm font-semibold">{tab.label}</span>
+                              {selectedTab === tab.id && (
+                                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50" />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
             </div>
+
           </div>
 
         </div>
@@ -749,47 +733,33 @@ export default function App() {
       {/* Main Terminal Stage */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
         
-        {/* Preset Ticker Market Bar */}
-        <section id="preset-ticker-bar" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-          {presets.map((preset) => {
-            const isSelected = activeTicker === preset.symbol;
-            const isUp = preset.change >= 0;
-            return (
-              <button
-                key={preset.symbol}
-                onClick={() => {
-                  setActiveTicker(preset.symbol);
+        {/* Preset Ticker Market Bar Dropdown */}
+        <section id="preset-ticker-selector" className="flex justify-center mb-6">
+          <div className="relative w-full max-w-xs">
+            <label className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest block mb-2 text-center">Active Market Ticker focus</label>
+            <select
+              value={activeTicker}
+              onChange={(e) => {
+                const sym = e.target.value;
+                setActiveTicker(sym);
+                const preset = presets.find(p => p.symbol === sym);
+                if (preset) {
                   if (preset.vibe === "Day Trade") setChartViewMode("day_trade");
                   if (preset.vibe === "Long Term") setChartViewMode("long_term");
-                }}
-                className={`bg-neutral-900 border text-left p-3.5 rounded-2xl transition-all duration-200 active:scale-[0.98] cursor-pointer ${
-                  isSelected 
-                    ? "border-emerald-500/60 bg-neutral-900 glow-emerald" 
-                    : "border-neutral-800 hover:border-neutral-700 hover:bg-neutral-900/60"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-mono font-bold text-sm text-white">{preset.symbol}</span>
-                  <span className={`px-1.5 py-0.5 rounded text-[8px] font-mono font-bold border uppercase ${
-                    preset.vibe === "Long Term" 
-                      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
-                      : preset.vibe === "Day Trade"
-                      ? "bg-cyan-500/10 border-cyan-500/20 text-cyan-400"
-                      : "bg-purple-500/10 border-purple-500/20 text-purple-400"
-                  }`}>
-                    {preset.vibe}
-                  </span>
-                </div>
-                <p className="text-[10px] text-neutral-500 font-medium truncate mt-0.5">{preset.name}</p>
-                <div className="flex items-baseline justify-between mt-2 pt-2 border-t border-neutral-800/40">
-                  <span className="font-mono font-bold text-sm text-neutral-100">${preset.price.toFixed(2)}</span>
-                  <span className={`font-mono text-xs font-bold ${isUp ? "text-emerald-400" : "text-rose-400"}`}>
-                    {isUp ? "+" : ""}{preset.changePercent.toFixed(1)}%
-                  </span>
-                </div>
-              </button>
-            );
-          })}
+                }
+              }}
+              className="w-full bg-neutral-900 border border-neutral-800 text-white font-bold py-3 px-4 rounded-2xl appearance-none cursor-pointer focus:border-emerald-500/50 outline-none shadow-xl"
+            >
+              {presets.map((preset) => (
+                <option key={preset.symbol} value={preset.symbol}>
+                  {preset.symbol} - {preset.name} (${preset.price.toFixed(2)})
+                </option>
+              ))}
+            </select>
+            <div className="absolute right-4 top-[38px] pointer-events-none text-neutral-500">
+              <ChevronDown size={18} />
+            </div>
+          </div>
         </section>
 
         {/* Selected View Rendering */}
@@ -930,7 +900,7 @@ export default function App() {
                   <div className="flex items-center justify-between pb-3 mb-4 border-b border-neutral-800/40">
                     <h4 className="font-sans font-bold text-sm text-neutral-300 uppercase tracking-wider flex items-center gap-1.5">
                       <Bell size={15} className="text-emerald-400" />
-                      Tactical Alerts Core
+                      Alerts AI Tactical Core
                     </h4>
                     <button
                       onClick={setNaturalAlerts}
@@ -1027,7 +997,7 @@ export default function App() {
                   <div className="flex items-center justify-between pb-3 mb-4 border-b border-neutral-800/40">
                     <h4 className="font-sans font-bold text-sm text-neutral-300 uppercase tracking-wider flex items-center gap-1.5">
                       <FileSearch size={15} className="text-emerald-400" />
-                      External Research Notes
+                      Research AI External Notes
                     </h4>
                   </div>
 
@@ -1168,6 +1138,24 @@ export default function App() {
           {selectedTab === "education" && (
             <div className="animate-fadeIn">
               <EducationCenter />
+            </div>
+          )}
+
+          {selectedTab === "classroom" && (
+            <div className="animate-fadeIn">
+              <GoogleClassroomIntegration accessToken={accessToken} />
+            </div>
+          )}
+
+          {selectedTab === "keep" && (
+            <div className="animate-fadeIn">
+              <GoogleKeepIntegration accessToken={accessToken} />
+            </div>
+          )}
+
+          {selectedTab === "slides" && (
+            <div className="animate-fadeIn">
+              <GoogleSlidesIntegration accessToken={accessToken} />
             </div>
           )}
 

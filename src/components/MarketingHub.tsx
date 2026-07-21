@@ -34,7 +34,7 @@ export default function MarketingHub() {
             <Share2 className="text-indigo-400" size={24} />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-white tracking-tight">Marketing & Ad Center</h2>
+            <h2 className="text-2xl font-bold text-white tracking-tight">Ad Center AI Created</h2>
             <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest">Growth Orchestration Hub</p>
           </div>
         </div>

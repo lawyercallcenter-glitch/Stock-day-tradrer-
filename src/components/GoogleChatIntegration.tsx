@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { MessageSquare, Send, Users, Hash, Shield, Sparkles, RefreshCw, ExternalLink } from "lucide-react";
+import { MessageSquare, Send, Users, Hash, Shield, Sparkles, RefreshCw, ExternalLink, LogIn } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { googleSignIn } from "../lib/firebase";
 
 interface Space {
   name: string;
@@ -13,6 +14,7 @@ export default function GoogleChatIntegration({ accessToken }: { accessToken?: s
   const [selectedSpace, setSelectedSpace] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [polishing, setPolishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchSpaces = async () => {
@@ -58,19 +60,50 @@ export default function GoogleChatIntegration({ accessToken }: { accessToken?: s
     }
   };
 
+  const polishSignal = async () => {
+    if (!message.trim()) return;
+    setPolishing(true);
+    try {
+      const response = await fetch("/api/gemini/polish-signal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+      });
+      if (!response.ok) throw new Error("Failed to polish signal");
+      const data = await response.json();
+      if (data.polished) setMessage(data.polished);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setPolishing(false);
+    }
+  };
+
   useEffect(() => {
     if (accessToken) fetchSpaces();
   }, [accessToken]);
 
   if (!accessToken) {
     return (
-      <div className="bg-neutral-900 border border-neutral-800 p-12 rounded-3xl text-center">
-        <MessageSquare className="mx-auto text-neutral-800 mb-4" size={48} />
-        <h3 className="text-xl font-bold text-white mb-2">Enable Google Chat</h3>
-        <p className="text-neutral-500 mb-6 max-w-sm mx-auto text-sm">
-          Bridge your trading room with Google Chat. Broadcast alerts, signals, and strategy shifts to your team instantly.
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-neutral-900 border border-neutral-800 p-16 rounded-3xl text-center max-w-2xl mx-auto"
+      >
+        <div className="w-20 h-20 bg-indigo-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+          <MessageSquare className="text-indigo-400" size={40} />
+        </div>
+        <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">Enable Chat AI Assisted</h3>
+        <p className="text-neutral-500 mb-8 max-w-sm mx-auto text-sm leading-relaxed">
+          Bridge your trading room with Google Chat. Broadcast alerts, signals, and strategy shifts to your team instantly. Connect your account to start broadcasting.
         </p>
-      </div>
+        <button
+          onClick={() => googleSignIn()}
+          className="bg-indigo-500 hover:bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold text-sm transition-all shadow-xl shadow-indigo-500/20 flex items-center gap-3 mx-auto"
+        >
+          <LogIn size={20} /> Connect Workspace
+        </button>
+      </motion.div>
     );
   }
 
@@ -82,7 +115,7 @@ export default function GoogleChatIntegration({ accessToken }: { accessToken?: s
             <MessageSquare className="text-indigo-400" size={24} />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-white tracking-tight">Chat Broadcast</h2>
+            <h2 className="text-2xl font-bold text-white tracking-tight">Chat AI Assisted</h2>
             <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest">Team Communication Active</p>
           </div>
         </div>
@@ -151,6 +184,15 @@ export default function GoogleChatIntegration({ accessToken }: { accessToken?: s
                     className="px-3 py-1 bg-neutral-800 text-neutral-400 rounded-lg text-[10px] font-bold uppercase hover:text-white transition-colors"
                   >
                     Signal Tag
+                  </button>
+                  <button
+                    type="button"
+                    onClick={polishSignal}
+                    disabled={polishing || !message.trim()}
+                    className="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-lg text-[10px] font-bold uppercase hover:bg-indigo-500/30 transition-all flex items-center gap-1"
+                  >
+                    {polishing ? <RefreshCw className="animate-spin" size={10} /> : <Sparkles size={10} />}
+                    AI Polish
                   </button>
                 </div>
                 <button

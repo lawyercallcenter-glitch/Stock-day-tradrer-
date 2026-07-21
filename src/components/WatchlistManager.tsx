@@ -89,7 +89,7 @@ export default function WatchlistManager() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Eye className="text-cyan-400" size={24} />
-          <h2 className="text-2xl font-bold text-white tracking-tight">Watchlist Command</h2>
+          <h2 className="text-2xl font-bold text-white tracking-tight">Watchlists AI Screened</h2>
         </div>
         <button
           onClick={() => setIsAdding(true)}

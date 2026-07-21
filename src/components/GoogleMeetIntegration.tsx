@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Video, Calendar, Plus, ExternalLink, RefreshCw, Clock, Users } from "lucide-react";
+import { Video, Calendar, Plus, ExternalLink, RefreshCw, Clock, Users, LogIn } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { googleSignIn } from "../lib/firebase";
 
 interface MeetingSpace {
   name: string;
@@ -64,13 +65,25 @@ export default function GoogleMeetIntegration({ accessToken }: { accessToken?: s
 
   if (!accessToken) {
     return (
-      <div className="bg-neutral-900 border border-neutral-800 p-12 rounded-3xl text-center">
-        <Video className="mx-auto text-neutral-800 mb-4" size={48} />
-        <h3 className="text-xl font-bold text-white mb-2">Connect Google Meet</h3>
-        <p className="text-neutral-500 mb-6 max-w-sm mx-auto text-sm">
-          Authorize access to manage your trading strategy meetings and group sessions directly.
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-neutral-900 border border-neutral-800 p-16 rounded-3xl text-center max-w-2xl mx-auto"
+      >
+        <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Video className="text-emerald-400" size={40} />
+        </div>
+        <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">Connect Meet AI Guided</h3>
+        <p className="text-neutral-500 mb-8 max-w-sm mx-auto text-sm leading-relaxed">
+          Launch instant video review sessions for your breakout alerts. Connect your account to manage strategy meetings and group sessions directly.
         </p>
-      </div>
+        <button
+          onClick={() => googleSignIn()}
+          className="bg-emerald-500 hover:bg-emerald-600 text-neutral-950 px-8 py-4 rounded-2xl font-bold text-sm transition-all shadow-xl shadow-emerald-500/20 flex items-center gap-3 mx-auto"
+        >
+          <LogIn size={20} /> Connect Workspace
+        </button>
+      </motion.div>
     );
   }
 
@@ -82,7 +95,7 @@ export default function GoogleMeetIntegration({ accessToken }: { accessToken?: s
             <Video className="text-emerald-400" size={24} />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-white tracking-tight">Meet Command</h2>
+            <h2 className="text-2xl font-bold text-white tracking-tight">Meet AI Guided</h2>
             <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest">Workspace Integration Active</p>
           </div>
         </div>

@@ -99,6 +99,10 @@ function getGeminiClient() {
 
 // Resilient JSON cleaner & parser for Gemini responses
 function robustParseJSON(text: string): any {
+  if (!text || !text.trim()) {
+    console.log("Empty text received in robustParseJSON");
+    return {};
+  }
   let cleaned = text.trim();
   
   // Strip markdown backticks block if present
@@ -115,7 +119,7 @@ function robustParseJSON(text: string): any {
       return JSON.parse(cleaned);
     } catch (e) {
       console.log("JSON repair attempt failed for text:", text);
-      throw err; // rethrow the original parsing error if custom cleaning fails
+      return {}; // Return empty object instead of throwing to prevent empty response
     }
   }
 }
@@ -147,7 +151,7 @@ async function startServer() {
         }`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-flash-latest",
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -280,7 +284,7 @@ async function startServer() {
       Keep the numbers highly realistic, corresponding to actual current prices of "${symbol}". Speak directly as Sera, the elite trader.`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-flash-latest",
         contents: prompt,
         config: {
           tools: [{ googleSearch: {} }],
@@ -405,7 +409,7 @@ async function startServer() {
       }`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-flash-latest",
         contents: prompt,
         config: {
           tools: [{ googleSearch: {} }],
@@ -552,7 +556,7 @@ async function startServer() {
       const ai = getGeminiClient();
       const prompt = `You are a quantitative financial analyst. Use Google Search to find the current realistic annual expected return rates for two types of strategies:\n1. Long-term broad market (like S&P 500 historical average or current forward estimates).\n2. Active Day Trading (an average reasonable upper-bound for a skilled retail trader, factoring in risk).\nOutput a single JSON object with:\n- "longTermRate": a number (e.g., 8.5)\n- "dayTradeRate": a number (e.g., 25.0)\n- "analysis": a 2-sentence explanation of these numbers based on current market conditions.`;
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-flash-latest",
         contents: prompt,
         config: {
           tools: [{ googleSearch: {} }],
@@ -585,7 +589,7 @@ async function startServer() {
       const ai = getGeminiClient();
       const prompt = `You are a quantitative market analyst. Use Google Search to evaluate the current stock market news, macro-economic conditions, and general market mood today. Output a single JSON object with:\n- "score": an integer from 0 (extreme fear) to 100 (extreme greed)\n- "label": a short string like "Fear", "Neutral", "Greed", "Bullish", etc.\n- "reason": a 1-sentence explanation.`;
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-flash-latest",
         contents: prompt,
         config: {
           tools: [{ googleSearch: {} }],
@@ -628,7 +632,7 @@ async function startServer() {
       }));
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-flash-latest",
         contents,
         config: {
           systemInstruction: `You are Sera, a professional stock trader and AI co-pilot. Have an open discussion, be conversational, and engage in back-and-forth dialogue. Sound very human-like, helpful, and sharp. You understand both day trading setups and long-term portfolio strategies. 
@@ -681,6 +685,169 @@ What ticker symbol or trading setup should we prepare a tactical risk plan for n
     }
   });
 
+  // Endpoint: AI-Powered Journal Entry Generator
+  app.post("/api/journal/generate", async (req, res) => {
+    const { symbols, sentiment, prompt: userPrompt } = req.body;
+    console.log("Generating journal for symbols:", symbols);
+    try {
+      const ai = getGeminiClient();
+      const prompt = `You are Sera, an elite trading AI co-pilot. Generate a professional trade journal entry.
+      Symbols: ${symbols || "General Market"}
+      Sentiment: ${sentiment || "Neutral"}
+      Additional Context: ${userPrompt || "Daily market review"}
+
+      You must return a strictly formatted JSON response:
+      {
+        "title": "A sharp, catchy title for the journal entry",
+        "content": "A detailed technical and psychological analysis of the trades or market behavior (approx 3-4 paragraphs). Mention volume, price action, and mental discipline.",
+        "sentiment": "Bullish", "Bearish", or "Neutral"
+      }`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-flash-latest",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            required: ["title", "content", "sentiment"],
+            properties: {
+              title: { type: Type.STRING },
+              content: { type: Type.STRING },
+              sentiment: { type: Type.STRING }
+            }
+          }
+        }
+      });
+
+      const text = response.text || "{}";
+      const parsedData = robustParseJSON(text);
+      res.json(parsedData);
+    } catch (err) {
+      console.error("Journal generation error:", err);
+      res.status(500).json({ error: "Failed to generate journal entry.", details: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  // Endpoint: AI Quiz Generator
+  app.post("/api/quiz/generate", async (req, res) => {
+    const { topic, level } = req.body;
+    try {
+      const ai = getGeminiClient();
+      const prompt = `Generate a 3-question multiple choice quiz for a trading course.
+      Topic: ${topic}
+      Level: ${level || "Beginner"} (Must be Beginner, Intermediate, or Expert)
+
+      Return a strictly formatted JSON response:
+      {
+        "questions": [
+          {
+            "id": 1,
+            "question": "The question text?",
+            "options": ["Option A", "Option B", "Option C", "Option D"],
+            "correctIndex": 0
+          }
+        ]
+      }`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-flash-latest",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            required: ["questions"],
+            properties: {
+              questions: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  required: ["id", "question", "options", "correctIndex"],
+                  properties: {
+                    id: { type: Type.NUMBER },
+                    question: { type: Type.STRING },
+                    options: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    correctIndex: { type: Type.NUMBER }
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+
+      const data = robustParseJSON(response.text || "{}");
+      res.json(data);
+    } catch (err) {
+      console.error("Quiz generation error:", err);
+      res.status(500).json({ error: "Failed to generate quiz." });
+    }
+  });
+
+  // Endpoint: SEO AI Agent - Content Audit & Optimization
+  app.post("/api/marketing/seo-audit", async (req, res) => {
+    const { content, targetAudience, goal } = req.body;
+    try {
+      const ai = getGeminiClient();
+      const prompt = `You are an expert SEO AI Agent. Audit the following content for a financial trading platform.
+      Content: ${content}
+      Target Audience: ${targetAudience || "Retail Day Traders"}
+      Goal: ${goal || "Increase conversions/signups"}
+
+      Analyze the content and provide optimization strategies.
+      Return a strictly formatted JSON response:
+      {
+        "score": 0-100,
+        "summary": "Overall SEO health summary",
+        "suggestedKeywords": ["keyword1", "keyword2", "keyword3"],
+        "metaDescription": "Optimized meta description (max 160 chars)",
+        "suggestions": [
+          { "type": "Title", "advice": "Change title to include X" },
+          { "type": "Readability", "advice": "Shorten sentences in paragraph 2" },
+          { "type": "Optimization", "advice": "Add alt text to images" }
+        ],
+        "optimizedDraft": "A slightly modified version of the content with better SEO integration"
+      }`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-flash-latest",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            required: ["score", "summary", "suggestedKeywords", "metaDescription", "suggestions", "optimizedDraft"],
+            properties: {
+              score: { type: Type.NUMBER },
+              summary: { type: Type.STRING },
+              suggestedKeywords: { type: Type.ARRAY, items: { type: Type.STRING } },
+              metaDescription: { type: Type.STRING },
+              suggestions: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  required: ["type", "advice"],
+                  properties: {
+                    type: { type: Type.STRING },
+                    advice: { type: Type.STRING }
+                  }
+                }
+              },
+              optimizedDraft: { type: Type.STRING }
+            }
+          }
+        }
+      });
+
+      const data = robustParseJSON(response.text || "{}");
+      res.json(data);
+    } catch (err) {
+      console.error("SEO Audit error:", err);
+      res.status(500).json({ error: "Failed to audit content." });
+    }
+  });
+
   // Endpoint: Gemini Day Trading Stock Recommendation Engine (suggests 3-5 high-probability day-trades today)
   app.get("/api/gemini/recommendations", async (req, res) => {
     try {
@@ -718,7 +885,7 @@ What ticker symbol or trading setup should we prepare a tactical risk plan for n
       }`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-flash-latest",
         contents: prompt,
         config: {
           tools: [{ googleSearch: {} }],
@@ -870,7 +1037,7 @@ What ticker symbol or trading setup should we prepare a tactical risk plan for n
       }`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-flash-latest",
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -965,7 +1132,7 @@ What ticker symbol or trading setup should we prepare a tactical risk plan for n
       }`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-flash-latest",
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -1126,7 +1293,7 @@ What ticker symbol or trading setup should we prepare a tactical risk plan for n
       }`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-flash-latest",
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -1178,7 +1345,7 @@ What ticker symbol or trading setup should we prepare a tactical risk plan for n
       }`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-flash-latest",
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -1199,6 +1366,30 @@ What ticker symbol or trading setup should we prepare a tactical risk plan for n
     } catch (err) {
       console.error("SEO AI error:", err);
       res.status(500).json({ error: "Failed to generate SEO optimization." });
+    }
+  });
+
+  // Endpoint: AI Polish for Trade Signals
+  app.post("/api/gemini/polish-signal", async (req, res) => {
+    const { message } = req.body;
+    try {
+      const ai = getGeminiClient();
+      const prompt = `You are a professional financial communications expert. 
+      Refine and "polish" the following trade signal or market update to be professional, impactful, and clear for a high-stakes trading group.
+      Original Message: "${message}"
+      
+      Keep it concise and actionable.
+      Return only the polished text.`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-flash-latest",
+        contents: prompt,
+      });
+
+      res.json({ polished: response.text?.trim() });
+    } catch (err) {
+      console.error("Signal polish error:", err);
+      res.status(500).json({ error: "Failed to polish signal." });
     }
   });
 

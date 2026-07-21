@@ -79,6 +79,20 @@
         "notes": { "type": "string", "maxLength": 512 }
       },
       "required": ["id", "symbol", "type", "action", "shares", "price", "timestamp"]
+    },
+    "Recommendation": {
+      "title": "Recommendation",
+      "description": "A stock recommendation shared with a contact",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "ticker": { "type": "string", "maxLength": 10 },
+        "contactResourceName": { "type": "string", "maxLength": 256 },
+        "sharedAt": { "type": "string", "format": "date-time" },
+        "message": { "type": "string", "maxLength": 1024 },
+        "type": { "type": "string", "enum": ["buy", "sell", "hold"] }
+      },
+      "required": ["id", "ticker", "contactResourceName", "sharedAt", "message"]
     }
   },
   "firestore": {
@@ -109,6 +123,10 @@
     "/users/{userId}/logs/{logId}": {
       "schema": "TradeLog",
       "description": "Legacy trade logs"
+    },
+    "/users/{userId}/recommendations/{recommendationId}": {
+      "schema": "Recommendation",
+      "description": "History of recommendations shared by the user"
     }
   }
 }

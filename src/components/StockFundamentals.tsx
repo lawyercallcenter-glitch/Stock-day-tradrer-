@@ -16,7 +16,7 @@ export default function StockFundamentals({ metric }: StockFundamentalsProps) {
 
   return (
     <div className="bg-neutral-900/90 border border-neutral-800 rounded-2xl p-5 backdrop-blur-md shadow-xl mt-4">
-      <h3 className="text-sm font-bold font-sans text-white mb-4 tracking-tight">Fundamental & Sentiment Analysis</h3>
+      <h3 className="text-sm font-bold font-sans text-white mb-4 tracking-tight">Fundamentals AI Analyzed</h3>
       <div className="grid grid-cols-3 gap-4">
         <div className="p-3 bg-neutral-950/40 rounded-xl border border-neutral-800/40 text-center">
           <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider">P/E Ratio</p>

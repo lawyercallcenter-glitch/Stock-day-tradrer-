@@ -238,25 +238,37 @@ export default function MarketingConsole() {
             {/* Inputs block */}
             <div className="space-y-4 font-mono text-xs">
               <div className="space-y-1.5">
-                <label className="text-[10px] text-neutral-400 uppercase tracking-wider font-bold">Trading Application Niche Focus</label>
-                <input
-                  type="text"
-                  value={focus}
-                  onChange={(e) => setFocus(e.target.value)}
-                  className="w-full bg-neutral-950 border border-neutral-850 rounded-lg p-2.5 text-neutral-200 focus:outline-none focus:border-emerald-500/30"
-                  placeholder="Focus statement..."
+                <label className="text-[10px] text-neutral-400 uppercase tracking-wider font-bold">Content Audit Laboratory (Blog/Promo Page)</label>
+                <textarea
+                  value={contentToAudit}
+                  onChange={(e) => setContentToAudit(e.target.value)}
+                  className="w-full h-32 bg-neutral-950 border border-neutral-850 rounded-lg p-2.5 text-neutral-200 focus:outline-none focus:border-emerald-500/30 resize-none"
+                  placeholder="Paste your content here for an automated deep SEO audit..."
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] text-neutral-400 uppercase tracking-wider font-bold">Primary Target SEO Keywords</label>
-                <input
-                  type="text"
-                  value={keywords}
-                  onChange={(e) => setKeywords(e.target.value)}
-                  className="w-full bg-neutral-950 border border-neutral-850 rounded-lg p-2.5 text-neutral-200 focus:outline-none focus:border-emerald-500/30"
-                  placeholder="Comma separated search targets..."
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] text-neutral-400 uppercase tracking-wider font-bold">Niche Focus</label>
+                  <input
+                    type="text"
+                    value={focus}
+                    onChange={(e) => setFocus(e.target.value)}
+                    className="w-full bg-neutral-950 border border-neutral-850 rounded-lg p-2.5 text-neutral-200 focus:outline-none focus:border-emerald-500/30"
+                    placeholder="Focus statement..."
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] text-neutral-400 uppercase tracking-wider font-bold">Target Keywords</label>
+                  <input
+                    type="text"
+                    value={keywords}
+                    onChange={(e) => setKeywords(e.target.value)}
+                    className="w-full bg-neutral-950 border border-neutral-850 rounded-lg p-2.5 text-neutral-200 focus:outline-none focus:border-emerald-500/30"
+                    placeholder="Comma separated targets..."
+                  />
+                </div>
               </div>
             </div>
 
