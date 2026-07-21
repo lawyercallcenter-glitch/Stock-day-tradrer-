@@ -729,6 +729,100 @@ What ticker symbol or trading setup should we prepare a tactical risk plan for n
     }
   });
 
+  // Endpoint: AI Academy Content Generator
+  app.post("/api/gemini/generate-academy-content", async (req, res) => {
+    const { topic, goal } = req.body;
+    try {
+      const ai = getGeminiClient();
+      const prompt = `You are a professional financial educator and content strategist for @stockremix26. 
+      Generate a comprehensive academy class plan for the topic: "${topic}".
+      Goal: ${goal || "Explain the concept clearly and provide actionable trading insights."}
+      
+      Return a strictly formatted JSON response:
+      {
+        "title": "A high-impact, SEO-optimized YouTube title",
+        "description": "A detailed description including key timestamps and @stockremix26 branding",
+        "script_outline": "A point-by-point script or outline for the video",
+        "tags": ["array", "of", "relevant", "tags"],
+        "quiz_suggestions": [
+          { "question": "...", "options": ["...", "..."], "correctIndex": 0 }
+        ]
+      }`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-flash-latest",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            required: ["title", "description", "script_outline", "tags", "quiz_suggestions"],
+            properties: {
+              title: { type: Type.STRING },
+              description: { type: Type.STRING },
+              script_outline: { type: Type.STRING },
+              tags: { type: Type.ARRAY, items: { type: Type.STRING } },
+              quiz_suggestions: { 
+                type: Type.ARRAY, 
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    question: { type: Type.STRING },
+                    options: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    correctIndex: { type: Type.NUMBER }
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+
+      const data = robustParseJSON(response.text || "{}");
+      res.json(data);
+    } catch (err) {
+      console.error("Generate academy content error:", err);
+      res.status(500).json({ error: "Failed to generate class content." });
+    }
+  });
+
+  // Endpoint: AI-Powered Chat Signal Polishing
+  app.post("/api/gemini/polish-signal", async (req, res) => {
+    const { message } = req.body;
+    try {
+      const ai = getGeminiClient();
+      const prompt = `You are Sera, an elite trading AI assistant. Polish the following trade signal or market update to sound professional, clear, and high-impact for a trading room.
+      Original Message: "${message}"
+      
+      Format it with emojis and clear sections (e.g., Ticker, Action, Rationale).
+      Return a strictly formatted JSON response:
+      {
+        "polished": "The polished message text"
+      }`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-flash-latest",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            required: ["polished"],
+            properties: {
+              polished: { type: Type.STRING }
+            }
+          }
+        }
+      });
+
+      const data = robustParseJSON(response.text || "{}");
+      res.json(data);
+    } catch (err) {
+      console.error("Polish signal error:", err);
+      res.status(500).json({ error: "Failed to polish signal." });
+    }
+  });
+
   // Endpoint: AI Quiz Generator
   app.post("/api/quiz/generate", async (req, res) => {
     const { topic, level } = req.body;
@@ -845,6 +939,204 @@ What ticker symbol or trading setup should we prepare a tactical risk plan for n
     } catch (err) {
       console.error("SEO Audit error:", err);
       res.status(500).json({ error: "Failed to audit content." });
+    }
+  });
+
+  // Endpoint: Portfolio AI Classify - Categorize stock based on volatility/fundamentals
+  app.post("/api/portfolio/classify", async (req, res) => {
+    const { symbol } = req.body;
+    try {
+      const ai = getGeminiClient();
+      const prompt = `Analyze the typical price action and fundamental profile of the ticker: "${symbol}".
+      Classify it as either 'day_trade' or 'long_term'.
+      
+      Criteria:
+      - 'day_trade': High volatility, frequent intraday breakouts, speculative nature, or high relative volume.
+      - 'long_term': Low beta, steady growth, strong dividends, or a 'blue chip' profile with consistent compounding.
+      
+      Return a strictly formatted JSON response:
+      {
+        "type": "day_trade" | "long_term",
+        "reason": "Short one-sentence explanation of the classification."
+      }`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-flash-latest",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            required: ["type", "reason"],
+            properties: {
+              type: { type: Type.STRING },
+              reason: { type: Type.STRING }
+            }
+          }
+        }
+      });
+
+      const data = robustParseJSON(response.text || "{}");
+      res.json(data);
+    } catch (err) {
+      console.error("Classification error:", err);
+      res.status(500).json({ error: "Failed to classify ticker." });
+    }
+  });
+
+  // Endpoint: Portfolio AI Constructor - Suggest stocks based on portfolio name
+  app.post("/api/portfolio/suggest", async (req, res) => {
+    const { portfolioName } = req.body;
+    try {
+      const ai = getGeminiClient();
+      const prompt = `You are an elite financial advisor AI. Suggest 3-5 appropriate stocks for a new portfolio named: "${portfolioName}".
+      Consider the likely objective implied by the name (e.g., 'Aggressive' = Growth/Tech, 'Retirement' = Dividends/Blue Chip).
+      
+      Return a strictly formatted JSON response:
+      {
+        "objective": "Concise objective statement",
+        "rationale": "Brief rationale for these choices",
+        "suggestions": [
+          { "symbol": "TICKER", "shares": number, "type": "LONG_TERM" | "DAY_TRADE" | "SWING_TRADE", "price": estimated_current_price }
+        ]
+      }`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-flash-latest",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            required: ["objective", "rationale", "suggestions"],
+            properties: {
+              objective: { type: Type.STRING },
+              rationale: { type: Type.STRING },
+              suggestions: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  required: ["symbol", "shares", "type", "price"],
+                  properties: {
+                    symbol: { type: Type.STRING },
+                    shares: { type: Type.NUMBER },
+                    type: { type: Type.STRING },
+                    price: { type: Type.NUMBER }
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+
+      const data = robustParseJSON(response.text || "{}");
+      res.json(data);
+    } catch (err) {
+      console.error("Portfolio Suggestion error:", err);
+      res.status(500).json({ error: "Failed to suggest stocks." });
+    }
+  });
+
+  // Endpoint: Portfolio AI Smart Sort - Suggests moving stocks between portfolios for better organization
+  app.post("/api/portfolio/smart-sort", async (req, res) => {
+    const { portfolios, stocks } = req.body;
+    try {
+      const ai = getGeminiClient();
+      const prompt = `You are an elite portfolio strategist. Analyze the user's current portfolios and stock positions.
+      Portfolios: ${JSON.stringify(portfolios)}
+      Stocks/Bags: ${JSON.stringify(stocks)}
+      
+      Your goal is to suggest moving stocks to the 'right' portfolio based on their intent (e.g., DAY_TRADE, LONG_TERM).
+      If a stock is marked as DAY_TRADE but is in a 'Long Term' named portfolio, suggest moving it to a 'Day Trades' portfolio.
+      
+      Return a strictly formatted JSON response:
+      {
+        "moves": [
+          { "symbol": "TICKER", "from": "Current Portfolio Name", "to": "Target Portfolio Name", "reason": "Why this move is recommended." }
+        ]
+      }`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-flash-latest",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            required: ["moves"],
+            properties: {
+              moves: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  required: ["symbol", "from", "to", "reason"],
+                  properties: {
+                    symbol: { type: Type.STRING },
+                    from: { type: Type.STRING },
+                    to: { type: Type.STRING },
+                    reason: { type: Type.STRING }
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+
+      const data = robustParseJSON(response.text || "{}");
+      res.json(data);
+    } catch (err) {
+      console.error("Smart Sort error:", err);
+      res.status(500).json({ error: "Failed to suggest sorting moves." });
+    }
+  });
+
+  // Endpoint: Portfolio AI Audit - Deep risk/allocation analysis
+  app.post("/api/portfolio/audit", async (req, res) => {
+    const { portfolioName, stocks } = req.body;
+    try {
+      const ai = getGeminiClient();
+      const prompt = `You are an elite portfolio risk analyst. Audit the following portfolio: "${portfolioName}".
+      Stocks: ${JSON.stringify(stocks)}
+      
+      Perform a deep dive into:
+      1. Sector concentration risk.
+      2. Beta/Volatility assessment.
+      3. Diversification opportunities.
+      4. Macro catalyst exposure.
+
+      Return a strictly formatted JSON response:
+      {
+        "overallHealth": "A-F or numeric score",
+        "analysis": "A detailed 3-4 paragraph technical audit report",
+        "actionItems": ["Action 1", "Action 2", "Action 3"],
+        "allocationScore": number (0-100)
+      }`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-flash-latest",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            required: ["overallHealth", "analysis", "actionItems", "allocationScore"],
+            properties: {
+              overallHealth: { type: Type.STRING },
+              analysis: { type: Type.STRING },
+              actionItems: { type: Type.ARRAY, items: { type: Type.STRING } },
+              allocationScore: { type: Type.NUMBER }
+            }
+          }
+        }
+      });
+
+      const data = robustParseJSON(response.text || "{}");
+      res.json(data);
+    } catch (err) {
+      console.error("Portfolio Audit error:", err);
+      res.status(500).json({ error: "Failed to audit portfolio." });
     }
   });
 

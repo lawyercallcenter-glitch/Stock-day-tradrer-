@@ -40,10 +40,14 @@ export default function GoogleClassroomIntegration({ accessToken }: ClassroomPro
       const response = await fetch("https://classroom.googleapis.com/v1/courses", {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-      if (!response.ok) throw new Error("Failed to fetch courses");
+      if (response.status === 403) {
+        throw new Error("Access Denied: You may need to grant Classroom permissions. Try connecting your account again.");
+      }
+      if (!response.ok) throw new Error(`Failed to fetch courses (Status: ${response.status})`);
       const data = await response.json();
       setCourses(data.courses || []);
     } catch (err: any) {
+      console.error("Classroom Error:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -65,7 +69,6 @@ export default function GoogleClassroomIntegration({ accessToken }: ClassroomPro
       });
       if (!response.ok) throw new Error("Failed to post announcement");
       setAnnouncement("");
-      alert("Announcement posted successfully!");
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -89,7 +92,11 @@ export default function GoogleClassroomIntegration({ accessToken }: ClassroomPro
         body: JSON.stringify({ topic: course.name, level: "Intermediate" })
       });
       const data = await res.json();
-      setQuizData(data.questions);
+      if (data && data.questions && Array.isArray(data.questions)) {
+        setQuizData(data.questions);
+      } else {
+        throw new Error("Invalid quiz data received");
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -166,6 +173,16 @@ export default function GoogleClassroomIntegration({ accessToken }: ClassroomPro
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl flex items-center gap-3 text-rose-400 text-xs">
+          <AlertCircle size={16} />
+          <p>{error}</p>
+          <button onClick={() => setError(null)} className="ml-auto hover:text-white">
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Course List */}

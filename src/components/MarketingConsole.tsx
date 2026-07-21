@@ -32,6 +32,7 @@ export default function MarketingConsole() {
   // SEO Agent States
   const [focus, setFocus] = useState("Stock day trading, real-time AI alerts, options risk analyzer");
   const [keywords, setKeywords] = useState("day trading tools, stock options scanner, Sera AI copilot, retail trader compounding");
+  const [contentToAudit, setContentToAudit] = useState("");
   const [loadingSEO, setLoadingSEO] = useState(false);
   const [seoResult, setSeoResult] = useState<SEOData | null>(null);
   const [copiedText, setCopiedText] = useState<string | null>(null);
@@ -43,17 +44,41 @@ export default function MarketingConsole() {
   const [campaignResult, setCampaignResult] = useState<CampaignData | null>(null);
 
   const triggerSEOAudit = async () => {
+    if (!contentToAudit) {
+      alert("Please paste some content to audit.");
+      return;
+    }
     setLoadingSEO(true);
     try {
-      const res = await fetch("/api/seo/optimize", {
+      const res = await fetch("/api/marketing/seo-audit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ focus, keywords })
+        body: JSON.stringify({ content: contentToAudit, focus, targetAudience: focus })
       });
       const data = await res.json();
-      setSeoResult(data);
+      
+      // Map the new API response to the existing SEOData structure if possible, or update the UI
+      // The new API returns { score, summary, suggestedKeywords, metaDescription, suggestions, optimizedDraft }
+      setSeoResult({
+        metaTitle: "Optimized Content Title",
+        metaDescription: data.metaDescription || "Generated SEO description",
+        openGraph: {
+          title: data.metaDescription ? data.metaDescription.substring(0, 50) : "Sera AI Analysis",
+          description: data.summary || "Content analysis by Sera AI",
+          image: "https://images.unsplash.com/photo-1611974714014-4b5042d9959e?auto=format&fit=crop&q=80&w=2070",
+          type: "article"
+        },
+        checklist: data.suggestions ? data.suggestions.map((s: any) => `${s.type}: ${s.advice}`) : ["Optimization complete"],
+        keywordRecommendations: data.suggestedKeywords ? data.suggestedKeywords.map((k: string) => ({
+          keyword: k,
+          searchVolume: "High",
+          competition: "Medium"
+        })) : [],
+        robotsTxt: "User-agent: *\nAllow: /"
+      });
     } catch (err) {
       console.error(err);
+      alert("Failed to execute SEO audit.");
     } finally {
       setLoadingSEO(false);
     }
@@ -238,7 +263,15 @@ export default function MarketingConsole() {
             {/* Inputs block */}
             <div className="space-y-4 font-mono text-xs">
               <div className="space-y-1.5">
-                <label className="text-[10px] text-neutral-400 uppercase tracking-wider font-bold">Content Audit Laboratory (Blog/Promo Page)</label>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="text-[10px] text-neutral-400 uppercase tracking-wider font-bold">Content Audit Laboratory (Blog/Promo Page)</label>
+                  <button 
+                    onClick={() => setContentToAudit("Sera is the ultimate stock day trading companion. It uses advanced AI to scan high-volume breakouts and suggests tactical trade setups with precise entry and exit points. Compounding wealth has never been easier with Sera's portfolio analyzer.")}
+                    className="text-[9px] font-mono text-emerald-400 hover:text-white transition-colors"
+                  >
+                    Load Sample Content
+                  </button>
+                </div>
                 <textarea
                   value={contentToAudit}
                   onChange={(e) => setContentToAudit(e.target.value)}

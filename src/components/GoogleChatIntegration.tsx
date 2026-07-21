@@ -16,6 +16,24 @@ export default function GoogleChatIntegration({ accessToken }: { accessToken?: s
   const [loading, setLoading] = useState(false);
   const [polishing, setPolishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [autoBroadcastEnabled, setAutoBroadcastEnabled] = useState<boolean>(() => {
+    return localStorage.getItem("sera_auto_broadcast_enabled") === "true";
+  });
+
+  const toggleAutoBroadcast = () => {
+    const newState = !autoBroadcastEnabled;
+    setAutoBroadcastEnabled(newState);
+    localStorage.setItem("sera_auto_broadcast_enabled", String(newState));
+    if (newState && selectedSpace) {
+      localStorage.setItem("sera_broadcast_space", selectedSpace);
+    }
+  };
+
+  useEffect(() => {
+    if (autoBroadcastEnabled && selectedSpace) {
+      localStorage.setItem("sera_broadcast_space", selectedSpace);
+    }
+  }, [selectedSpace, autoBroadcastEnabled]);
 
   const fetchSpaces = async () => {
     if (!accessToken) return;
@@ -26,8 +44,15 @@ export default function GoogleChatIntegration({ accessToken }: { accessToken?: s
       });
       if (!response.ok) throw new Error("Failed to fetch Google Chat spaces");
       const data = await response.json();
-      setSpaces(data.spaces || []);
-      if (data.spaces?.length > 0) setSelectedSpace(data.spaces[0].name);
+      const fetchedSpaces = data.spaces || [];
+      setSpaces(fetchedSpaces);
+      
+      const storedSpace = localStorage.getItem("sera_broadcast_space");
+      if (storedSpace && fetchedSpaces.some((s: any) => s.name === storedSpace)) {
+        setSelectedSpace(storedSpace);
+      } else if (fetchedSpaces.length > 0) {
+        setSelectedSpace(fetchedSpaces[0].name);
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -213,13 +238,33 @@ export default function GoogleChatIntegration({ accessToken }: { accessToken?: s
                 <Sparkles size={24} />
               </div>
               <div>
-                <h4 className="font-bold text-white mb-1">Sera Auto-Broadcast</h4>
-                <p className="text-xs text-neutral-400">Enable AI to automatically post high-conviction breakouts to this space.</p>
+                <h4 className="font-bold text-white mb-1">
+                  Sera Auto-Broadcast 
+                  {autoBroadcastEnabled && <span className="ml-2 text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full uppercase tracking-widest">Active</span>}
+                </h4>
+                <p className="text-xs text-neutral-400">
+                  {autoBroadcastEnabled 
+                    ? `Currently broadcasting to ${spaces.find(s => s.name === selectedSpace)?.displayName || "selected space"}.`
+                    : "Enable AI to automatically post high-conviction breakouts to this space."}
+                </p>
               </div>
             </div>
-            <button className="px-6 py-2 bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-500/20">
-              Enable
-            </button>
+            <div className="flex flex-col gap-2 items-end">
+              <button 
+                onClick={toggleAutoBroadcast}
+                disabled={!selectedSpace}
+                className={`px-6 py-2 rounded-xl text-xs font-bold shadow-lg transition-all ${
+                  autoBroadcastEnabled 
+                    ? "bg-rose-500 hover:bg-rose-600 shadow-rose-500/20 text-white" 
+                    : "bg-indigo-500 hover:bg-indigo-600 shadow-indigo-500/20 text-white"
+                } disabled:opacity-30 disabled:cursor-not-allowed`}
+              >
+                {autoBroadcastEnabled ? "Stop Broadcast" : "Enable Auto-Scan Broadcast"}
+              </button>
+              {!selectedSpace && (
+                <p className="text-[10px] font-mono text-neutral-500 text-right uppercase tracking-tighter">* Select a space above to enable</p>
+              )}
+            </div>
           </div>
         </div>
       </div>

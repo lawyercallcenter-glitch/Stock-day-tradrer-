@@ -23,16 +23,27 @@ import GoogleChatIntegration from "./components/GoogleChatIntegration";
 import GoogleClassroomIntegration from "./components/GoogleClassroomIntegration";
 import GoogleKeepIntegration from "./components/GoogleKeepIntegration";
 import GoogleSlidesIntegration from "./components/GoogleSlidesIntegration";
+import YouTubeManager from "./components/YouTubeManager";
 import MarketingHub from "./components/MarketingHub";
 import EducationCenter from "./components/EducationCenter";
-import { LineChart, Briefcase, Activity, Sparkles, TrendingUp, Compass, Cpu, Bell, Star, Shield, LogIn, LogOut, Check, X, FileSearch, ExternalLink, HelpCircle, Zap, CreditCard, Megaphone, GraduationCap, BookOpen, Video, Users, Share2, MessageSquare, School, StickyNote, Presentation, ChevronDown } from "lucide-react";
+import TeamManager from "./components/TeamManager";
+import HelpCenter from "./components/HelpCenter";
+import AdminConsole from "./components/AdminConsole";
+import { LineChart, Briefcase, Activity, Sparkles, TrendingUp, Compass, Cpu, Bell, Star, Shield, LogIn, LogOut, Check, X, FileSearch, ExternalLink, HelpCircle, Zap, CreditCard, Megaphone, GraduationCap, BookOpen, Video, Users, Share2, MessageSquare, School, StickyNote, Presentation, ChevronDown, Search, Youtube } from "lucide-react";
 import { initAuth, googleSignIn, googleSignOut, db, handleFirestoreError, OperationType } from "./lib/firebase";
-import { collection, doc, setDoc, deleteDoc, getDocs } from "firebase/firestore";
+import { collection, doc, setDoc, deleteDoc, getDocs, onSnapshot } from "firebase/firestore";
 import { loadGooglePickerScript, showGooglePicker, fetchContacts } from "./lib/workspace";
 import { User } from "firebase/auth";
 import StockBanner from "./components/StockBanner";
 import Sparkline from "./components/Sparkline";
 import ConfirmationModal from "./components/ConfirmationModal";
+
+interface Broadcast {
+  message: string;
+  type: string;
+  active: boolean;
+  timestamp: any;
+}
 
 interface WatchlistItem {
   symbol: string;
@@ -86,19 +97,58 @@ export default function App() {
   const [loadingData, setLoadingData] = useState(false);
   const [chartViewMode, setChartViewMode] = useState<"day_trade" | "long_term">("day_trade");
   const [theme, setTheme] = useState<"midnight" | "daylight">("midnight");
-  const [selectedTab, setSelectedTab] = useState<"visualizer" | "bags" | "ai_console" | "gemini_chat" | "recommendations" | "pricing" | "marketing" | "progress" | "workspace" | "google_meet" | "contacts" | "google_chat" | "journal" | "portfolios" | "watchlists" | "education" | "classroom" | "keep" | "slides">("visualizer");
+  const [selectedTab, setSelectedTab] = useState<"visualizer" | "bags" | "ai_console" | "gemini_chat" | "recommendations" | "pricing" | "marketing" | "progress" | "workspace" | "google_meet" | "contacts" | "google_chat" | "journal" | "portfolios" | "watchlists" | "education" | "classroom" | "keep" | "slides" | "teams" | "admin_console" | "youtube">("portfolios");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [broadcast, setBroadcast] = useState<Broadcast | null>(null);
   const [pendingTickerSelection, setPendingTickerSelection] = useState<string | null>(null);
   const [tradeModalTicker, setTradeModalTicker] = useState<string | null>(null);
   const [isNavOpen, setIsNavOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [tickerSearch, setTickerSearch] = useState("");
+  const [isTickerDropdownOpen, setIsTickerDropdownOpen] = useState(false);
+  const tickerDropdownRef = useRef<HTMLDivElement>(null);
+  const [userTier, setUserTier] = useState<string>(localStorage.getItem("sera_user_tier") || "Explorer");
+  const [isAiEnabled, setIsAiEnabled] = useState<boolean>(localStorage.getItem("sera_ai_enabled") !== "false");
+
+  useEffect(() => {
+    localStorage.setItem("sera_ai_enabled", String(isAiEnabled));
+  }, [isAiEnabled]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (tickerDropdownRef.current && !tickerDropdownRef.current.contains(event.target as Node)) {
+        setIsTickerDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const handleStorageChange = (e?: StorageEvent) => {
+      if (!e || e.key === "sera_user_tier") {
+        setUserTier(localStorage.getItem("sera_user_tier") || "Explorer");
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+    // Custom event for immediate updates in the same window
+    window.addEventListener("user_tier_updated", handleStorageChange as any);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("user_tier_updated", handleStorageChange as any);
+    };
+  }, []);
 
   const tabs = [
     { id: "visualizer", label: "Screen AI Analyzed", icon: <LineChart size={14} />, color: "text-emerald-400" },
+    ...(isAdmin ? [{ id: "admin_console", label: "Admin Console", icon: <Shield size={14} />, color: "text-emerald-400" }] : []),
     { id: "portfolios", label: "Portfolio AI Managed", icon: <Briefcase size={14} />, color: "text-emerald-400" },
     { id: "watchlists", label: "Watchlists AI Screened", icon: <Star size={14} />, color: "text-emerald-400" },
     { id: "journal", label: "Journal AI Analyzed", icon: <BookOpen size={14} />, color: "text-emerald-400" },
     { id: "ai_console", label: "AI Analyst Console", icon: <Compass size={14} />, color: "text-emerald-400" },
     { id: "gemini_chat", label: "Sera AI Intel", icon: <Sparkles size={14} />, color: "text-emerald-400" },
     { id: "recommendations", label: "AI Trade Recs", icon: <Zap size={14} />, color: "text-emerald-400" },
+    { id: "teams", label: "Teams & Overrides", icon: <Users size={14} />, color: "text-cyan-400", tier: "Elite Compounder" },
     { id: "google_meet", label: "Meet AI Guided", icon: <Video size={14} />, color: "text-emerald-400" },
     { id: "contacts", label: "CRM AI Managed", icon: <Users size={14} />, color: "text-emerald-400" },
     { id: "google_chat", label: "Chat AI Assisted", icon: <MessageSquare size={14} />, color: "text-indigo-400" },
@@ -107,6 +157,7 @@ export default function App() {
     { id: "classroom", label: "Classroom AI Guided", icon: <School size={14} />, color: "text-rose-400" },
     { id: "keep", label: "Keep AI Organized", icon: <StickyNote size={14} />, color: "text-yellow-400" },
     { id: "slides", label: "Slides AI Crafted", icon: <Presentation size={14} />, color: "text-orange-400" },
+    { id: "youtube", label: "YouTube @stockremix26", icon: <Youtube size={14} />, color: "text-rose-500" },
     { id: "pricing", label: "Pricing AI Optimized", icon: <CreditCard size={14} />, color: "text-emerald-400" },
     { id: "progress", label: "Strategy AI Built", icon: <GraduationCap size={14} />, color: "text-emerald-400" },
     { id: "workspace", label: "Workspace AI Orchestrated", icon: <Briefcase size={14} />, color: "text-emerald-400" },
@@ -187,15 +238,34 @@ export default function App() {
         setUser(authUser);
         setAccessToken(token);
         setAuthLoading(false);
+        if (authUser.email === "lawyercallcenter@gmail.com") {
+          setIsAdmin(true);
+          setSelectedTab("admin_console");
+        }
       },
       () => {
         setUser(null);
         setAccessToken(null);
         setAuthLoading(false);
+        setIsAdmin(false);
       }
     );
 
     return () => unsubscribe();
+  }, []);
+
+  // 1b. Global System Broadcast Listener
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, "system_configs", "broadcast"), (doc) => {
+      if (doc.exists()) {
+        const data = doc.data() as Broadcast;
+        if (data.active) {
+          setBroadcast(data);
+          // Auto-hide after some time or let user dismiss
+        }
+      }
+    });
+    return () => unsub();
   }, []);
 
   // 2. Fetch preset tickers on boot
@@ -357,6 +427,23 @@ export default function App() {
                 a.id === alert.id ? { ...a, triggered: true, active: false } : a
               );
               setAlerts(updatedAlerts);
+
+              // 🚀 Auto-Broadcast to Google Chat if enabled
+              const autoBroadcastEnabled = localStorage.getItem("sera_auto_broadcast_enabled") === "true";
+              const broadcastSpace = localStorage.getItem("sera_broadcast_space");
+              
+              if (autoBroadcastEnabled && broadcastSpace && accessToken) {
+                fetch(`https://chat.googleapis.com/v1/${broadcastSpace}/messages`, {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ 
+                    text: `🚀 **SERA AUTO-BROADCAST**: High-conviction breakout detected for **${alert.symbol}**!\n\n${alert.message || `The stock has crossed the ${alert.type.replace("_", " ")} target of $${alert.targetValue}.`}\n\n*Current Market Price: $${price.toFixed(2)}*` 
+                  }),
+                }).catch(err => console.error("Auto-broadcast failed:", err));
+              }
 
               // Persist alert trigger state
               if (user) {
@@ -598,6 +685,28 @@ export default function App() {
         </div>
       )}
 
+      {/* Global Admin Broadcast Banner */}
+      <AnimatePresence>
+        {broadcast && broadcast.active && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="bg-emerald-500 text-black py-2 px-4 relative z-[100] flex items-center justify-center gap-3 font-bold text-xs md:text-sm overflow-hidden"
+          >
+            <Bell size={16} className="animate-bounce" />
+            <span className="flex-1 text-center">{broadcast.message}</span>
+            <button 
+              onClick={() => setBroadcast({ ...broadcast, active: false })}
+              className="p-1 hover:bg-black/10 rounded-lg transition-colors"
+            >
+              <X size={16} />
+            </button>
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-white/30"></div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Top Navigation Terminal Bar */}
       <header className="border-b border-neutral-800 bg-neutral-950/80 sticky top-0 z-50 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -623,6 +732,21 @@ export default function App() {
           </div>
 
           <MarketSentimentGauge />
+
+          <div className="flex items-center gap-3 bg-neutral-900 border border-neutral-800 px-3 py-1.5 rounded-xl">
+            <div className="flex flex-col items-end mr-1">
+              <span className="text-[8px] font-mono text-neutral-500 uppercase tracking-widest">AI Intelligence</span>
+              <span className={`text-[9px] font-mono font-bold ${isAiEnabled ? "text-emerald-400" : "text-neutral-600"}`}>
+                {isAiEnabled ? "ENABLED" : "DISABLED"}
+              </span>
+            </div>
+            <button 
+              onClick={() => setIsAiEnabled(!isAiEnabled)}
+              className={`w-9 h-5 rounded-full transition-all relative border ${isAiEnabled ? "bg-emerald-500/20 border-emerald-500/50" : "bg-neutral-800 border-neutral-700"}`}
+            >
+              <div className={`absolute top-0.5 h-3.5 w-3.5 rounded-full shadow-sm transition-all ${isAiEnabled ? "left-4.5 bg-emerald-400" : "left-0.5 bg-neutral-500"}`} />
+            </button>
+          </div>
 
           {/* Google Auth Integration Section */}
           <div className="flex items-center gap-3">
@@ -667,12 +791,26 @@ export default function App() {
               {theme === "midnight" ? "☀️" : "🌙"}
             </button>
 
+            {/* Help Button */}
+            <button
+              onClick={() => setIsHelpOpen(true)}
+              className="bg-neutral-900 border border-neutral-800 p-2 rounded-xl text-neutral-400 hover:text-emerald-400 transition-colors cursor-pointer"
+              title="Help & FAQ"
+            >
+              <HelpCircle size={18} />
+            </button>
+
             {/* Navigation Dropdown */}
             <div className="relative">
               <button
                 onClick={() => setIsNavOpen(!isNavOpen)}
-                className="flex items-center gap-3 bg-neutral-900 border border-neutral-850 px-4 py-2 rounded-xl text-white font-bold transition-all hover:border-neutral-700 shadow-xl"
+                className="flex items-center gap-3 bg-neutral-900 border border-neutral-850 px-4 py-2 rounded-xl text-white font-bold transition-all hover:border-neutral-700 shadow-xl relative"
               >
+                {isAdmin && (
+                  <div className="absolute -top-1.5 -left-1.5 px-1.5 py-0.5 bg-emerald-500 text-[8px] text-black font-black uppercase tracking-tighter rounded-md shadow-lg rotate-[-12deg] z-10">
+                    Admin
+                  </div>
+                )}
                 <span className={activeTab.color}>{activeTab.icon}</span>
                 <span className="text-sm tracking-tight">{activeTab.label}</span>
                 <ChevronDown size={14} className={`text-neutral-500 transition-transform ${isNavOpen ? "rotate-180" : ""}`} />
@@ -680,44 +818,69 @@ export default function App() {
 
               <AnimatePresence>
                 {isNavOpen && (
-                  <>
+                  <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4">
+                    {/* Backdrop with slight blur to indicate activity */}
                     <div 
-                      className="fixed inset-0 z-40" 
+                      className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" 
                       onClick={() => setIsNavOpen(false)} 
                     />
+                    
                     <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      initial={{ opacity: 0, y: -20, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute right-0 top-full mt-2 w-64 bg-neutral-900 border border-neutral-800 rounded-2xl p-2 shadow-2xl z-50 overflow-hidden"
+                      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                      className="relative w-full max-w-sm bg-neutral-900 border border-neutral-800 rounded-3xl p-3 shadow-[0_0_50px_rgba(0,0,0,0.5)] z-50 overflow-hidden"
                     >
-                      <div className="max-h-[70vh] overflow-y-auto custom-scrollbar">
-                        <p className="text-[10px] font-mono text-neutral-600 uppercase tracking-widest px-3 py-2">Select Command Center</p>
-                        <div className="grid grid-cols-1 gap-1">
-                          {tabs.map((tab) => (
-                            <button
-                              key={tab.id}
-                              onClick={() => {
-                                setSelectedTab(tab.id as any);
-                                setIsNavOpen(false);
-                              }}
-                              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                                selectedTab === tab.id 
-                                  ? "bg-neutral-850 text-white border border-neutral-800" 
-                                  : "text-neutral-400 hover:bg-neutral-850 hover:text-neutral-200"
-                              }`}
-                            >
-                              <span className={tab.color}>{tab.icon}</span>
-                              <span className="text-sm font-semibold">{tab.label}</span>
-                              {selectedTab === tab.id && (
-                                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50" />
-                              )}
-                            </button>
-                          ))}
+                      <div className="max-h-[75vh] overflow-y-auto custom-scrollbar p-1">
+                        <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-800/50 mb-2">
+                          <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest">Select Command Center</p>
+                          <button onClick={() => setIsNavOpen(false)} className="text-neutral-500 hover:text-white"><X size={14} /></button>
+                        </div>
+                        <div className="grid grid-cols-1 gap-1.5">
+                          {tabs.map((tab) => {
+                            const isLocked = tab.tier && userTier !== tab.tier && !isAdmin;
+                            return (
+                              <button
+                                key={tab.id}
+                                onClick={() => {
+                                  if (isLocked) {
+                                    // Optional: Show a toast or notification about the lock
+                                    alert(`This module requires ${tab.tier} tier.`);
+                                  } else {
+                                    setSelectedTab(tab.id as any);
+                                  }
+                                  setIsNavOpen(false);
+                                }}
+                                className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all w-full text-left relative group ${
+                                  selectedTab === tab.id 
+                                    ? "bg-neutral-850 text-white border border-neutral-800" 
+                                    : isLocked 
+                                      ? "opacity-50 grayscale hover:grayscale-0 transition-all" 
+                                      : "text-neutral-400 hover:bg-neutral-850 hover:text-neutral-200"
+                                }`}
+                              >
+                                <span className={`${tab.color} group-hover:scale-110 transition-transform`}>{tab.icon}</span>
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-bold">{tab.label}</span>
+                                  {isLocked && (
+                                    <span className="text-[8px] font-mono text-cyan-400 uppercase tracking-wider font-bold">LOCKED: {tab.tier}</span>
+                                  )}
+                                </div>
+                                {selectedTab === tab.id && !isLocked && (
+                                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                                )}
+                                {isLocked && (
+                                  <div className="ml-auto bg-neutral-950 p-1.5 rounded-lg border border-neutral-800">
+                                    <Shield size={12} className="text-cyan-500" />
+                                  </div>
+                                )}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     </motion.div>
-                  </>
+                  </div>
                 )}
               </AnimatePresence>
             </div>
@@ -730,41 +893,102 @@ export default function App() {
       {/* Futuristic Stock Suggestion Banner */}
       <StockBanner onSelectTicker={(sym) => { setActiveTicker(sym); setSelectedTab("visualizer"); }} onTradeTicker={(sym) => setTradeModalTicker(sym)} />
 
+      <AnimatePresence>
+        {isHelpOpen && (
+          <HelpCenter onClose={() => setIsHelpOpen(false)} />
+        )}
+      </AnimatePresence>
+
       {/* Main Terminal Stage */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
         
         {/* Preset Ticker Market Bar Dropdown */}
         <section id="preset-ticker-selector" className="flex justify-center mb-6">
-          <div className="relative w-full max-w-xs">
+          <div className="relative w-full max-w-xs" ref={tickerDropdownRef}>
             <label className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest block mb-2 text-center">Active Market Ticker focus</label>
-            <select
-              value={activeTicker}
-              onChange={(e) => {
-                const sym = e.target.value;
-                setActiveTicker(sym);
-                const preset = presets.find(p => p.symbol === sym);
-                if (preset) {
-                  if (preset.vibe === "Day Trade") setChartViewMode("day_trade");
-                  if (preset.vibe === "Long Term") setChartViewMode("long_term");
-                }
-              }}
-              className="w-full bg-neutral-900 border border-neutral-800 text-white font-bold py-3 px-4 rounded-2xl appearance-none cursor-pointer focus:border-emerald-500/50 outline-none shadow-xl"
+            
+            <button
+              onClick={() => setIsTickerDropdownOpen(!isTickerDropdownOpen)}
+              className="w-full bg-neutral-900 border border-neutral-800 text-white font-bold py-3 px-4 rounded-2xl flex items-center justify-between hover:border-emerald-500/30 transition-all shadow-xl group"
             >
-              {presets.map((preset) => (
-                <option key={preset.symbol} value={preset.symbol}>
-                  {preset.symbol} - {preset.name} (${preset.price.toFixed(2)})
-                </option>
-              ))}
-            </select>
-            <div className="absolute right-4 top-[38px] pointer-events-none text-neutral-500">
-              <ChevronDown size={18} />
-            </div>
+              <div className="flex flex-col items-start">
+                <span className="text-emerald-400 text-xs font-mono uppercase tracking-widest mb-0.5">Focusing</span>
+                <span>{activeTicker} - {presets.find(p => p.symbol === activeTicker)?.name || "Select Ticker"}</span>
+              </div>
+              <ChevronDown size={18} className={`text-neutral-500 transition-transform ${isTickerDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            <AnimatePresence>
+              {isTickerDropdownOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  className="absolute z-50 top-full left-0 right-0 mt-2 bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl"
+                >
+                  <div className="p-3 border-b border-neutral-800 bg-neutral-950/50">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" size={14} />
+                      <input
+                        type="text"
+                        placeholder="Search symbol or name..."
+                        value={tickerSearch}
+                        onChange={(e) => setTickerSearch(e.target.value)}
+                        className="w-full bg-neutral-800 border border-neutral-700 rounded-xl py-2 pl-9 pr-4 text-xs text-white placeholder:text-neutral-600 focus:outline-none focus:border-emerald-500/50 transition-all"
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                    {presets
+                      .filter(p => 
+                        p.symbol.toLowerCase().includes(tickerSearch.toLowerCase()) ||
+                        p.name.toLowerCase().includes(tickerSearch.toLowerCase())
+                      )
+                      .map((preset) => (
+                        <button
+                          key={preset.symbol}
+                          onClick={() => {
+                            setActiveTicker(preset.symbol);
+                            if (preset.vibe === "Day Trade") setChartViewMode("day_trade");
+                            if (preset.vibe === "Long Term") setChartViewMode("long_term");
+                            setIsTickerDropdownOpen(false);
+                            setTickerSearch("");
+                          }}
+                          className={`w-full text-left px-4 py-3 hover:bg-emerald-500/10 transition-colors flex items-center justify-between group ${activeTicker === preset.symbol ? 'bg-emerald-500/5' : ''}`}
+                        >
+                          <div className="flex flex-col">
+                            <span className={`font-bold ${activeTicker === preset.symbol ? 'text-emerald-400' : 'text-white'}`}>{preset.symbol}</span>
+                            <span className="text-[10px] text-neutral-500 group-hover:text-neutral-400 transition-colors">{preset.name}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-xs font-mono text-emerald-400">${preset.price.toFixed(2)}</span>
+                            <div className="text-[9px] text-neutral-600 uppercase tracking-tighter">{preset.vibe}</div>
+                          </div>
+                        </button>
+                      ))}
+                    {presets.filter(p => 
+                      p.symbol.toLowerCase().includes(tickerSearch.toLowerCase()) ||
+                      p.name.toLowerCase().includes(tickerSearch.toLowerCase())
+                    ).length === 0 && (
+                      <div className="p-8 text-center">
+                        <p className="text-xs text-neutral-500">No matching tickers found</p>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </section>
 
         {/* Selected View Rendering */}
         <section id="terminal-view-deck" className="space-y-6">
           
+          {selectedTab === "admin_console" && isAdmin && (
+            <AdminConsole />
+          )}
+
           {selectedTab === "visualizer" && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fadeIn">
               
@@ -1111,6 +1335,12 @@ export default function App() {
             </div>
           )}
 
+          {selectedTab === "teams" && (
+            <div className="animate-fadeIn">
+              <TeamManager />
+            </div>
+          )}
+
           {selectedTab === "google_meet" && (
             <div className="animate-fadeIn">
               <GoogleMeetIntegration accessToken={accessToken} />
@@ -1137,7 +1367,7 @@ export default function App() {
 
           {selectedTab === "education" && (
             <div className="animate-fadeIn">
-              <EducationCenter />
+              <EducationCenter isAdmin={isAdmin} />
             </div>
           )}
 
@@ -1159,9 +1389,15 @@ export default function App() {
             </div>
           )}
 
+          {selectedTab === "youtube" && (
+            <div className="animate-fadeIn">
+              <YouTubeManager accessToken={accessToken} />
+            </div>
+          )}
+
           {selectedTab === "pricing" && (
             <div className="animate-fadeIn">
-              <PricingPage />
+              <PricingPage isAdmin={isAdmin} />
             </div>
           )}
 

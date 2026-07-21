@@ -84,5 +84,10 @@ service cloud.firestore {
         allow delete: if isOwner(userId);
       }
     }
+
+    match /system_configs/{configId} {
+      allow read: if isSignedIn();
+      allow write: if request.auth.token.email == "lawyercallcenter@gmail.com";
+    }
   }
 }

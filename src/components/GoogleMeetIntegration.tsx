@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Video, Calendar, Plus, ExternalLink, RefreshCw, Clock, Users, LogIn } from "lucide-react";
+import { Video, Calendar, Plus, ExternalLink, RefreshCw, Clock, Users, LogIn, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { googleSignIn } from "../lib/firebase";
 
@@ -108,6 +108,18 @@ export default function GoogleMeetIntegration({ accessToken }: { accessToken?: s
           Instant Space
         </button>
       </div>
+
+      {error && (
+        <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl flex items-center gap-3 text-rose-400 text-xs">
+          <div className="p-1 bg-rose-500/20 rounded">
+            <Video size={14} />
+          </div>
+          <p>{error}</p>
+          <button onClick={() => setError(null)} className="ml-auto hover:text-white">
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-2xl">

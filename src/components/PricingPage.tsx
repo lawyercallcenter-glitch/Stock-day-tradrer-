@@ -62,6 +62,7 @@ const PRICING_TIERS: PricingTier[] = [
       "Ultra-low latency dedicated API routes",
       "Multi-asset correlation scanner",
       "Automated portfolio risk compounding modeler",
+      "Team Overrides & Management Dashboard",
       "Customizable system instruction triggers for Sera AI",
       "Priority 1-on-1 developer onboarding",
       "Lifetime feature roadmap updates"
@@ -70,7 +71,11 @@ const PRICING_TIERS: PricingTier[] = [
   }
 ];
 
-export default function PricingPage() {
+interface PricingPageProps {
+  isAdmin?: boolean;
+}
+
+export default function PricingPage({ isAdmin }: PricingPageProps) {
   const [selectedTier, setSelectedTier] = useState<PricingTier | null>(null);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [loadingPayment, setLoadingPayment] = useState(false);
@@ -96,6 +101,14 @@ export default function PricingPage() {
       setLoadingPayment(false);
       setPaymentSuccess(true);
       setActivePlan(selectedTier?.name || "Basic Free Trial");
+      
+      // Persist tier for App.tsx access
+      if (selectedTier) {
+        localStorage.setItem("sera_user_tier", selectedTier.name);
+        // Dispatch event to notify App.tsx of storage change immediately in current window
+        window.dispatchEvent(new CustomEvent("user_tier_updated"));
+      }
+
       // Clean up tier view state after brief success notice
       setTimeout(() => {
         setSelectedTier(null);

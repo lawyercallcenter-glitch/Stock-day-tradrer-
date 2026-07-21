@@ -22,6 +22,7 @@ export default function AIScanConsole({ presets, onSelectTicker, onProposeTicker
   const [scannedSources, setScannedSources] = useState<{ title: string; uri: string }[]>([]);
   const [scanning, setScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
+  const [autoScan, setAutoScan] = useState(false);
 
   // Workspace Actions State
   const [savingToDrive, setSavingToDrive] = useState(false);
@@ -46,6 +47,17 @@ export default function AIScanConsole({ presets, onSelectTicker, onProposeTicker
     fetchDailyScan();
     analyzeTicker("NVDA");
   }, []);
+
+  // Auto-scan loop
+  useEffect(() => {
+    let interval: any;
+    if (autoScan) {
+      interval = setInterval(() => {
+        fetchDailyScan();
+      }, 30000); // every 30s
+    }
+    return () => clearInterval(interval);
+  }, [autoScan]);
 
   // Fetch 3 high-volume live day trading breakouts from the server-side Gemini Google Search grounding
   const fetchDailyScan = async () => {
@@ -511,14 +523,25 @@ Rationale: ${setup.explanation}`,
                 <Compass className="text-emerald-400" size={20} />
                 Scanner AI Tactical Breakouts
               </h4>
-              <button
-                onClick={fetchDailyScan}
-                disabled={scanning}
-                className="p-1.5 rounded-lg bg-neutral-950 border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-700 transition-all cursor-pointer"
-                title="Scan for news breakouts"
-              >
-                <RefreshCw size={13} className={scanning ? "animate-spin" : ""} />
-              </button>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 bg-neutral-950 border border-neutral-800 px-2 py-1 rounded-lg">
+                  <span className="text-[9px] font-mono text-neutral-500 uppercase tracking-tighter">Auto-Scan</span>
+                  <button 
+                    onClick={() => setAutoScan(!autoScan)}
+                    className={`w-8 h-4 rounded-full transition-all relative ${autoScan ? "bg-emerald-500" : "bg-neutral-800"}`}
+                  >
+                    <div className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all ${autoScan ? "left-4.5" : "left-0.5"}`} />
+                  </button>
+                </div>
+                <button
+                  onClick={fetchDailyScan}
+                  disabled={scanning}
+                  className="p-1.5 rounded-lg bg-neutral-950 border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-700 transition-all cursor-pointer"
+                  title="Scan for news breakouts"
+                >
+                  <RefreshCw size={13} className={scanning ? "animate-spin" : ""} />
+                </button>
+              </div>
             </div>
 
             <div className="space-y-4">

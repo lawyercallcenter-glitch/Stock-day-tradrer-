@@ -1,10 +1,12 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User, signOut } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { initializeFirestore } from "firebase/firestore";
 import firebaseConfig from "../../firebase-applet-config.json";
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+export const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+});
 export const auth = getAuth(app);
 
 // Configure Google OAuth provider with requested Google Workspace scopes
@@ -24,6 +26,8 @@ provider.addScope("https://www.googleapis.com/auth/contacts.readonly");
 provider.addScope("https://www.googleapis.com/auth/classroom.courses.readonly");
 provider.addScope("https://www.googleapis.com/auth/classroom.announcements");
 provider.addScope("https://www.googleapis.com/auth/presentations");
+provider.addScope("https://www.googleapis.com/auth/youtube.upload");
+provider.addScope("https://www.googleapis.com/auth/youtube.readonly");
 
 let isSigningIn = false;
 let cachedAccessToken: string | null = null;

@@ -1,49 +1,128 @@
 import React, { useState, useEffect } from "react";
-import { GraduationCap, Play, BookOpen, Star, Clock, ChevronRight, Zap, Target, BarChart, Shield, CheckCircle2, Award, RefreshCw, X, Trophy, Sparkles } from "lucide-react";
+import { GraduationCap, Play, BookOpen, Star, Clock, ChevronRight, Zap, Target, BarChart, Shield, CheckCircle2, Award, RefreshCw, X, Trophy, Sparkles, ExternalLink, Video, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { db } from "../lib/firebase";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
 
-const MODULES = [
+const STATIC_MODULES: Module[] = [
   {
     id: "m1",
-    title: "Market Microstructure",
-    description: "Understanding order books, liquidity sweeps, and high-frequency patterns.",
+    title: "Beginner: Trading Foundation",
+    description: "Stock Temix Series: Understanding the core principles of market movement and order types.",
     level: "Beginner",
-    duration: "12m",
+    duration: "15m",
     color: "emerald",
-    videoId: "zW_C0M4v9Hk", // Sample trading education video
+    videoId: "zW_C0M4v9Hk",
   },
   {
     id: "m2",
-    title: "Technical Indicator Suite",
-    description: "Mastering VWAP, RSI, and MACD for confirmation in volatile sessions.",
-    level: "Intermediate",
-    duration: "25m",
-    color: "blue",
+    title: "Beginner: Technical Setup",
+    description: "Configuring your layout, indicators, and hotkeys for rapid execution.",
+    level: "Beginner",
+    duration: "10m",
+    color: "emerald",
     videoId: "m9L0vM30k9Q",
   },
   {
     id: "m3",
-    title: "Risk Psychology",
-    description: "Developing the discipline to cut losses and let winners run.",
-    level: "Advanced",
-    duration: "18m",
-    color: "amber",
+    title: "Intermediate: Price Action Secrets",
+    description: "Decoding candlestick patterns and volume price analysis to spot entries.",
+    level: "Intermediate",
+    duration: "22m",
+    color: "blue",
     videoId: "L7G0Of_D-Sg",
   },
   {
     id: "m4",
-    title: "Portfolio Theory",
-    description: "Balancing alpha-seeking day trades with long-term foundational bags.",
-    level: "Expert",
-    duration: "30m",
-    color: "purple",
+    title: "Intermediate: Trend Mastery",
+    description: "Using Moving Averages and VWAP to ride major intraday trends.",
+    level: "Intermediate",
+    duration: "18m",
+    color: "blue",
     videoId: "9N7iX0N-k5Y",
+  },
+  {
+    id: "m5",
+    title: "Advanced: Order Flow Dynamics",
+    description: "Level 2, Time & Sales, and identifying institutional footprints.",
+    level: "Advanced",
+    duration: "28m",
+    color: "amber",
+    videoId: "O4-n_yZ2z0k",
+  },
+  {
+    id: "m6",
+    title: "Advanced: Scalping Tactics",
+    description: "High-frequency strategies for capturing micro-movements in momentum stocks.",
+    level: "Advanced",
+    duration: "20m",
+    color: "amber",
+    videoId: "PZ_aX0yO_wQ",
+  },
+  {
+    id: "m7",
+    title: "Expert: Macro Correlation",
+    description: "Analyzing how indices, bonds, and forex impact your specific equity setups.",
+    level: "Expert",
+    duration: "35m",
+    color: "purple",
+    videoId: "G9h3E6_3T_s",
+  },
+  {
+    id: "m8",
+    title: "Expert: Institutional Risk Logic",
+    description: "Advanced hedging, position sizing, and managing multi-million dollar portfolios.",
+    level: "Expert",
+    duration: "40m",
+    color: "purple",
+    videoId: "vX0S4E_y-A8",
   },
 ];
 
-export default function EducationCenter() {
-  const [selectedModule, setSelectedModule] = useState(MODULES[0]);
+interface Module {
+  id: string;
+  title: string;
+  description: string;
+  level: string;
+  duration: string;
+  color: string;
+  videoId: string;
+}
+
+interface EducationCenterProps {
+  isAdmin?: boolean;
+}
+
+export default function EducationCenter({ isAdmin }: EducationCenterProps) {
+  const [modules, setModules] = useState<Module[]>([]);
+  const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [loadingModules, setLoadingModules] = useState(true);
+  
+  useEffect(() => {
+    const fetchDynamicModules = async () => {
+      try {
+        const q = query(collection(db, "academy_modules"), orderBy("createdAt", "desc"));
+        const snapshot = await getDocs(q);
+        const dynamicModules = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Module[];
+        
+        const allModules = [...STATIC_MODULES, ...dynamicModules];
+        setModules(allModules);
+        if (!selectedModule) setSelectedModule(allModules[0]);
+      } catch (err) {
+        console.error("Error fetching modules:", err);
+        setModules(STATIC_MODULES);
+        if (!selectedModule) setSelectedModule(STATIC_MODULES[0]);
+      } finally {
+        setLoadingModules(false);
+      }
+    };
+    fetchDynamicModules();
+  }, []);
+
   const [showQuiz, setShowQuiz] = useState(false);
   const [quizData, setQuizData] = useState<any>(null);
   const [loadingQuiz, setLoadingQuiz] = useState(false);
@@ -51,38 +130,72 @@ export default function EducationCenter() {
   const [score, setScore] = useState(0);
   const [quizFinished, setQuizFinished] = useState(false);
   const [showCertificate, setShowCertificate] = useState(false);
+  const [completedModules, setCompletedModules] = useState<string[]>([]);
+  const [currentCertificateModule, setCurrentCertificateModule] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const startQuiz = async () => {
+    if (!selectedModule) return;
     setLoadingQuiz(true);
     setShowQuiz(true);
     setQuizFinished(false);
     setScore(0);
     setQuizStep(0);
+    setError(null);
     try {
       const res = await fetch("/api/quiz/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic: selectedModule.title, level: selectedModule.level })
       });
-      const data = await res.json();
-      setQuizData(data.questions);
-    } catch (err) {
+      
+      const text = await res.text();
+      if (!text) throw new Error("AI returned an empty response. Try again.");
+      
+      const data = JSON.parse(text);
+      if (data && data.questions && Array.isArray(data.questions)) {
+        setQuizData(data.questions);
+      } else {
+        throw new Error(data.error || "Invalid quiz data received");
+      }
+    } catch (err: any) {
       console.error(err);
+      setError(err.message || "Failed to generate quiz. Check your AI connection.");
     } finally {
       setLoadingQuiz(false);
     }
   };
 
   const handleAnswer = (index: number) => {
-    if (index === quizData[quizStep].correctIndex) {
-      setScore(score + 1);
+    if (!selectedModule || !quizData) return;
+    const isCorrect = index === quizData[quizStep].correctIndex;
+    const finalScore = isCorrect ? score + 1 : score;
+    
+    if (isCorrect) {
+      setScore(prev => prev + 1);
     }
+    
     if (quizStep + 1 < quizData.length) {
-      setQuizStep(quizStep + 1);
+      setQuizStep(prev => prev + 1);
     } else {
       setQuizFinished(true);
+      if (finalScore === quizData.length) {
+        if (!completedModules.includes(selectedModule.id)) {
+          setCompletedModules(prev => [...prev, selectedModule.id]);
+        }
+      }
     }
   };
+
+  if (loadingModules) {
+    return (
+      <div className="h-64 flex items-center justify-center">
+        <RefreshCw className="animate-spin text-rose-500" size={32} />
+      </div>
+    );
+  }
+
+  if (!selectedModule) return null;
 
   return (
     <div className="space-y-8">
@@ -96,16 +209,36 @@ export default function EducationCenter() {
             <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest">Sera-Powered Learning Path</p>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          {showCertificate && (
-            <button 
-              onClick={() => setShowCertificate(true)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[10px] font-bold text-amber-400 uppercase tracking-widest animate-pulse"
-            >
-              <Award size={14} /> View Certificate
-            </button>
-          )}
-          <div className="flex items-center gap-2 text-xs font-mono text-neutral-500">
+          <div className="flex items-center gap-4">
+            {completedModules.length > 0 && (
+              <div className="relative group">
+                <button 
+                  className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[10px] font-bold text-amber-400 uppercase tracking-widest"
+                >
+                  <Award size={14} /> {completedModules.length} Certs Earned
+                </button>
+                <div className="absolute right-0 top-full mt-2 w-64 bg-neutral-900 border border-neutral-800 rounded-2xl p-2 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                  <p className="text-[9px] font-mono text-neutral-500 p-2 border-b border-neutral-800 mb-1">YOUR CERTIFICATES</p>
+                  {completedModules.map(mid => {
+                    const mod = modules.find(m => m.id === mid);
+                    return (
+                      <button 
+                        key={mid}
+                        onClick={() => {
+                          setCurrentCertificateModule(mod);
+                          setShowCertificate(true);
+                        }}
+                        className="w-full text-left p-2 hover:bg-neutral-850 rounded-lg text-[10px] text-neutral-300 flex items-center justify-between group/cert"
+                      >
+                        <span className="truncate">{mod?.title}</span>
+                        <ChevronRight size={12} className="text-neutral-600 group-hover/cert:text-rose-400" />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            <div className="flex items-center gap-2 text-xs font-mono text-neutral-500">
             <Star className="text-amber-400" size={14} />
             <span>LVL 4 ANALYST</span>
             <div className="w-24 h-1 bg-neutral-800 rounded-full overflow-hidden">
@@ -115,19 +248,54 @@ export default function EducationCenter() {
         </div>
       </div>
 
+      {error && (
+        <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl flex items-center gap-3 text-rose-400 text-xs">
+          <AlertCircle size={16} />
+          <p>{error}</p>
+          <button onClick={() => setError(null)} className="ml-auto hover:text-white">
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           {/* Main Stage (Video Player) */}
           <div className="relative aspect-video bg-neutral-950 border border-neutral-800 rounded-3xl overflow-hidden group shadow-2xl">
             {isPlaying ? (
-              <iframe
-                src={`https://www.youtube.com/embed/${selectedModule.videoId}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1&origin=${window.location.origin}`}
-                className="absolute inset-0 w-full h-full border-0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                title={selectedModule.title}
-                referrerPolicy="no-referrer-when-downgrade"
-              />
+              <div className="absolute inset-0 w-full h-full bg-black">
+                <iframe
+                  src={`https://www.youtube.com/embed/${selectedModule.videoId}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}&widget_referrer=${encodeURIComponent(window.location.origin)}`}
+                  className="w-full h-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  title={selectedModule.title}
+                  referrerPolicy="no-referrer-when-downgrade"
+                  loading="lazy"
+                />
+                <div className="absolute top-4 right-4 flex gap-2 z-20">
+                   <a 
+                    href={`https://www.youtube.com/watch?v=${selectedModule.videoId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-lg border border-rose-500"
+                   >
+                     <ExternalLink size={12} />
+                     Open in YouTube
+                   </a>
+                   <button 
+                    onClick={() => setIsPlaying(false)}
+                    className="p-1.5 bg-black/50 hover:bg-black text-white rounded-lg transition-all"
+                   >
+                     <X size={16} />
+                   </button>
+                </div>
+                <div className="absolute bottom-4 left-4 right-4 text-center pointer-events-none">
+                  <p className="text-[10px] text-neutral-500 bg-black/60 backdrop-blur-md px-4 py-1 rounded-full inline-block">
+                    If video doesn't load, use the "Fix" button above to view directly on YouTube.
+                  </p>
+                </div>
+              </div>
             ) : (
               <div className="absolute inset-0 flex items-center justify-center bg-[url('https://images.unsplash.com/photo-1611974714014-4b5042d9959e?auto=format&fit=crop&q=80&w=2070')] bg-cover bg-center">
                 <div className="absolute inset-0 bg-neutral-950/80 backdrop-blur-sm" />
@@ -149,11 +317,37 @@ export default function EducationCenter() {
               </div>
             )}
             
-            <div className="absolute top-6 right-6">
+            <div className="absolute top-6 right-6 flex items-center gap-2">
+              <button
+                onClick={() => window.open(`https://www.youtube.com/watch?v=${selectedModule.videoId}`, "_blank")}
+                className="bg-neutral-950/80 backdrop-blur-md border border-neutral-800 p-2 rounded-full text-rose-400 hover:text-white transition-colors"
+                title="Watch on YouTube"
+              >
+                <ExternalLink size={14} />
+              </button>
               <span className="px-3 py-1 bg-neutral-950/80 backdrop-blur-md border border-neutral-800 rounded-full text-[10px] font-bold text-rose-400 uppercase tracking-widest">
                 AI CURATED
               </span>
             </div>
+          </div>
+
+          <div className="flex items-center justify-between p-4 bg-rose-500/5 border border-rose-500/10 rounded-2xl">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 bg-rose-500/20 rounded-xl flex items-center justify-center">
+                <Video className="text-rose-400" size={20} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white">Stock Temix Official Channel</p>
+                <p className="text-[10px] font-mono text-neutral-500">Subscribe for live daily market analysis</p>
+              </div>
+            </div>
+            <button
+              onClick={() => window.open("https://www.youtube.com/@StockTemix", "_blank")}
+              className="bg-rose-500 hover:bg-rose-600 text-neutral-950 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg shadow-rose-500/20 flex items-center gap-2 uppercase tracking-wider"
+            >
+              Go to YouTube Channel
+              <ExternalLink size={14} />
+            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -196,7 +390,7 @@ export default function EducationCenter() {
         <div className="space-y-4">
           <h3 className="font-bold text-white px-2">AI-Guided Learning Path</h3>
           <div className="space-y-3">
-            {MODULES.map((mod) => (
+            {modules.map((mod) => (
               <button
                 key={mod.id}
                 onClick={() => {
@@ -228,12 +422,16 @@ export default function EducationCenter() {
                   <div className="h-1 flex-1 bg-neutral-950 rounded-full mr-4 overflow-hidden">
                     <div 
                       className={`h-full transition-all duration-500 ${
-                        selectedModule.id === mod.id ? "bg-rose-500" : "bg-neutral-800"
+                        completedModules.includes(mod.id) ? "bg-emerald-500" : selectedModule.id === mod.id ? "bg-rose-500" : "bg-neutral-800"
                       }`} 
-                      style={{ width: selectedModule.id === mod.id ? "35%" : "0%" }}
+                      style={{ width: completedModules.includes(mod.id) ? "100%" : selectedModule.id === mod.id ? "35%" : "0%" }}
                     />
                   </div>
-                  <ChevronRight size={14} className={selectedModule.id === mod.id ? "text-rose-400" : "text-neutral-700"} />
+                  {completedModules.includes(mod.id) ? (
+                    <CheckCircle2 size={14} className="text-emerald-500" />
+                  ) : (
+                    <ChevronRight size={14} className={selectedModule.id === mod.id ? "text-rose-400" : "text-neutral-700"} />
+                  )}
                 </div>
               </button>
             ))}
@@ -274,14 +472,15 @@ export default function EducationCenter() {
                   </div>
                   <div>
                     <h3 className="text-2xl font-bold text-white mb-2">Quiz Complete!</h3>
-                    <p className="text-neutral-400 text-sm">You scored {score} out of {quizData.length} questions correctly.</p>
+                    <p className="text-neutral-400 text-sm">You answered all questions. Mastery requires a 100% score.</p>
                   </div>
-                  {score === quizData.length ? (
+                  {completedModules.includes(selectedModule.id) ? (
                     <div className="space-y-4">
                       <p className="text-emerald-400 text-xs font-bold uppercase tracking-widest">Mastery Achieved</p>
                       <button 
                         onClick={() => {
                           setShowQuiz(false);
+                          setCurrentCertificateModule(selectedModule);
                           setShowCertificate(true);
                         }}
                         className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-neutral-950 rounded-2xl font-bold transition-all shadow-xl shadow-emerald-500/20"
@@ -350,7 +549,7 @@ export default function EducationCenter() {
                 <p className="text-sm font-mono text-neutral-500 uppercase tracking-[0.3em]">Presented to</p>
                 <p className="text-3xl font-serif text-neutral-900 italic">Financial Analyst</p>
                 <p className="text-sm text-neutral-600 max-w-sm leading-relaxed">
-                  For successful completion of the <span className="font-bold text-neutral-900">{selectedModule.title}</span> program 
+                  For successful completion of the <span className="font-bold text-neutral-900">{currentCertificateModule?.title}</span> program 
                   conducted by the <span className="font-bold">Sera AI Intelligence Bureau</span>.
                 </p>
                 <div className="pt-8 flex items-center gap-12">

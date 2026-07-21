@@ -81,9 +81,14 @@ export default function JournalManager() {
       if (!response.ok) {
         let errorMsg = "Generation failed";
         try {
-          const errorData = await response.json();
-          errorMsg = errorData.error || errorMsg;
-        } catch (e) {}
+          const errorText = await response.text();
+          if (errorText) {
+            const errorData = JSON.parse(errorText);
+            errorMsg = errorData.error || errorMsg;
+          }
+        } catch (e) {
+          errorMsg = `Generation failed with status ${response.status}`;
+        }
         throw new Error(errorMsg);
       }
       
